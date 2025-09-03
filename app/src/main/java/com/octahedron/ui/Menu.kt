@@ -22,9 +22,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.octahedron.ui.screen.SettingsScreen
+import com.octahedron.veiwmodel.SettingsViewModel
 
 @Composable
-fun Menu() {
+fun Menu(vm: SettingsViewModel) {
 
     val navController = rememberNavController()
 
@@ -60,7 +62,7 @@ fun Menu() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Home.route) { HomeScreen() }
-            composable(Screen.Settings.route) { SettingsScreen() }
+            composable(Screen.Settings.route) { SettingsScreen(vm) }
         }
     }
 }
@@ -75,9 +77,9 @@ val bottomDestinations = listOf(
     Screen.Home,
     Screen.Settings)
 
-@Composable fun SettingsScreen() {
-    Text(text = "Settings Screen",modifier = Modifier.padding(16.dp))
-}
+//@Composable fun SettingsScreen() {
+//    Text(text = "Settings Screen",modifier = Modifier.padding(16.dp))
+//}
 
 @Composable fun HomeScreen() {
     Text(text = "Home Screen",modifier = Modifier.padding(16.dp))
