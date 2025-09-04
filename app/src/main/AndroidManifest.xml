@@ -10,15 +10,17 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Octahedron">
+        android:theme="@style/Theme.Octahedron"
+        android:localeConfig="@xml/locales_config">
+        <meta-data
+            android:name="androidx.appcompat.app.AppLocalesMetadata.appLocales"
+            android:resource="@xml/locales_config" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.Octahedron">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

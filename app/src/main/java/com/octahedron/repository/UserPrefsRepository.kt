@@ -1,7 +1,10 @@
 package com.octahedron.repository
 
 import android.content.Context
-import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.stringPreferencesKey
+import com.octahedron.data.AppLanguage
 import com.octahedron.data.AppTheme
 import com.octahedron.data.UserPrefs
 import com.octahedron.data.userPrefsDataStore
@@ -15,6 +18,7 @@ class UserPrefsRepository(private val context: Context) {
     private object Keys {
         val THEME = stringPreferencesKey("theme")
         val NICKNAME = stringPreferencesKey("nickname")
+        val LANGUAGE = stringPreferencesKey("language")
     }
 
     val prefs: Flow<UserPrefs> =
@@ -27,6 +31,7 @@ class UserPrefsRepository(private val context: Context) {
                 UserPrefs(
                     theme = AppTheme.fromPref(p[Keys.THEME]),
                     nickname = p[Keys.NICKNAME] ?: "",
+                    language = AppLanguage.fromPref(p[Keys.LANGUAGE])
                 )
             }
 
@@ -38,4 +43,7 @@ class UserPrefsRepository(private val context: Context) {
         context.userPrefsDataStore.edit { it[Keys.NICKNAME] = nick }
     }
 
+    suspend fun setLanguage(lang: AppLanguage) {
+        context.userPrefsDataStore.edit { it[Keys.LANGUAGE] = lang.tag }
+    }
 }

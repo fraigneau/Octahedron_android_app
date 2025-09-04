@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_theme">Thème</string>
+    <string name="theme_system">Système</string>
+    <string name="theme_light">Clair</string>
+    <string name="theme_dark">Sombre</string>
+
+    <string name="settings_language">Langue</string>
+    <string name="lang_system">Langue du système</string>
+    <string name="lang_french">Français</string>
+    <string name="lang_english">Anglais</string>
+
+    <string name="nickname">Surnom</string>
+
+</resources>

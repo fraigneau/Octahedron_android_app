@@ -36,8 +36,8 @@ fun OctahedronTheme(
 
     val colorScheme = when (appTheme) {
         AppTheme.SYSTEM -> if (isSystemInDarkTheme()) dynamicDark else dynamicLight
-        AppTheme.DARK   -> darkColorScheme()
-        AppTheme.LIGHT  -> lightColorScheme()
+        AppTheme.DARK   -> DarkColorScheme
+        AppTheme.LIGHT  -> LightColorScheme
     }
 
     MaterialTheme(

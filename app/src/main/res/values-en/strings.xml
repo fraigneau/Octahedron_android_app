@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Octahedron</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_theme">Theme</string>
@@ -14,4 +13,5 @@
     <string name="lang_english">English</string>
 
     <string name="nickname">Nickname</string>
+
 </resources>

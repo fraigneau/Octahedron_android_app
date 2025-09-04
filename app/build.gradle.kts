@@ -33,6 +33,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
     }
     buildFeatures {
         compose = true
@@ -52,6 +53,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     implementation("androidx.datastore:datastore-preferences:1.1.7")
+    implementation(libs.androidx.appcompat)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

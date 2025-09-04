@@ -2,9 +2,7 @@ package com.octahedron.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -76,10 +74,6 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
 val bottomDestinations = listOf(
     Screen.Home,
     Screen.Settings)
-
-//@Composable fun SettingsScreen() {
-//    Text(text = "Settings Screen",modifier = Modifier.padding(16.dp))
-//}
 
 @Composable fun HomeScreen() {
     Text(text = "Home Screen",modifier = Modifier.padding(16.dp))
