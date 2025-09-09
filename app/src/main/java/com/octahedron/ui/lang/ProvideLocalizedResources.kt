@@ -9,17 +9,17 @@ import com.octahedron.data.AppLanguage
 
 @Composable
 fun ProvideLocalizedResources(
-    language: AppLanguage,
+    appLanguage: AppLanguage,
     content: @Composable () -> Unit
 ) {
     val base = LocalContext.current
 
-    val localizedCtx = remember(language) {
+    val localizedCtx = remember(appLanguage) {
         val cfg = Configuration()
-        val locales = if (language.tag.isEmpty())
+        val locales = if (appLanguage.tag.isEmpty())
             LocaleList.getDefault()
         else
-            LocaleList.forLanguageTags(language.tag)
+            LocaleList.forLanguageTags(appLanguage.tag)
         cfg.setLocales(locales)
         if (locales.size() > 0) cfg.setLayoutDirection(locales[0])
 
