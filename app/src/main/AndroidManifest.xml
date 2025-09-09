@@ -11,6 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Octahedron"
+        android:name=".Application"
         android:localeConfig="@xml/locales_config">
         <meta-data
             android:name="androidx.appcompat.app.AppLocalesMetadata.appLocales"
