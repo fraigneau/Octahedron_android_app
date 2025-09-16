@@ -1,6 +1,8 @@
 package com.octahedron
 
+import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -12,6 +14,7 @@ import com.octahedron.ui.theme.OctahedronTheme
 import com.octahedron.veiwmodel.SettingsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,6 +23,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val vm: SettingsViewModel = viewModel()
             val prefs = vm.state.collectAsStateWithLifecycle().value
+
+            // donner les permission pour le service de NotificationListener
+            val enabled = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
+            if (enabled?.contains(packageName) != true) {
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            }
 
             ProvideLocalizedResources(appLanguage = prefs.language) {
                 OctahedronTheme(appTheme = prefs.theme) {
