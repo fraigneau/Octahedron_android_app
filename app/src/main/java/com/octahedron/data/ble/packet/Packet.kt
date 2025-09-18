@@ -8,7 +8,7 @@ object Packet {
 
     const val TAG = "Packet"
 
-    const val MAGIC = 0x4C465220 // "LFR"
+    const val MAGIC = 0x4C465220 // "LFR "
     const val HEADER_SIZE = 6
     const val HASH_SIZE = 4
     const val PIXEL_PER_LINE = 240
@@ -79,9 +79,9 @@ object Packet {
 
             return buffer.array()
         }
-        fun FileWrite(crc32: CRC32, line: ByteArray): ByteArray {
+        fun FileWrite(crc32: CRC32, line: ByteArray): ByteArray { // check CRC32
             val base = Base.make(type = Type.FILE_WRITE).toBytes()
-            val hashByte = crc32.value.toByte()
+            val hashByte = ByteBuffer.allocate(HASH_SIZE).putInt(crc32.value.toInt()).array()
 
             val buffer = ByteBuffer.allocate(HEADER_SIZE + HASH_SIZE + LINE_SIZE)
             buffer.put(base)
@@ -92,7 +92,8 @@ object Packet {
         }
         fun FileExists(crc32: CRC32): ByteArray {
             val base = Base.make(type = Type.FILE_EXISTS).toBytes()
-            val hashByte = crc32.value.toByte()
+            val hashByte = ByteBuffer.allocate(HASH_SIZE).putInt(crc32.value.toInt()).array()
+
 
             val buffer = ByteBuffer.allocate(HEADER_SIZE + HASH_SIZE)
             buffer.put(base)
@@ -102,7 +103,7 @@ object Packet {
         }
         fun FileDelete(crc32: CRC32): ByteArray {
             val base = Base.make(type = Type.FILE_DELETE).toBytes()
-            val hashByte = crc32.value.toByte()
+            val hashByte = ByteBuffer.allocate(HASH_SIZE).putInt(crc32.value.toInt()).array()
 
             val buffer = ByteBuffer.allocate(HEADER_SIZE + HASH_SIZE)
             buffer.put(base)
@@ -113,6 +114,8 @@ object Packet {
     }
 
     fun parse(buffer: ByteBuffer) {
+
+        if (buffer.limit() < HEADER_SIZE + HEALTH_STATUS_SIZE) return
 
         val baseBuffer = viewRange(buffer, 0, HEADER_SIZE).array()
         val base = Base.parse(baseBuffer) ?: return
@@ -127,6 +130,7 @@ object Packet {
                 when (healthStatus) {
                     HealthStatus.OK -> {
                         Log.d(TAG,"Health OK")
+
                     }
                     HealthStatus.DISPLAY_ERROR -> {
                         Log.d(TAG,"Display error")
@@ -138,7 +142,7 @@ object Packet {
                         Log.d(TAG,"Unknown error")
                     }
                     else -> {
-                        Log.wtf(TAG,"Unknown health status")
+                        Log.e(TAG,"Unknown health status")
                     }
                 }
             }
@@ -149,7 +153,7 @@ object Packet {
 
             }
             else -> {
-                Log.wtf(TAG,"Unknown type of packet")
+                Log.e(TAG,"Unknown type of packet")
             }
         }
 
