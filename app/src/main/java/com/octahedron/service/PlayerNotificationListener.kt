@@ -1,44 +1,39 @@
 package com.octahedron.service
 
+import android.content.ComponentName
+import android.content.Intent
 import android.media.MediaMetadata
 import android.media.session.MediaController
-import android.media.session.MediaSession
-import android.os.Build
+import android.media.session.MediaSessionManager
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import androidx.core.content.ContextCompat
+import com.octahedron.data.bus.NowPlayingBus
 
 class PlayerNotificationListener: NotificationListenerService() {
 
     companion object {
         private const val TAG = "PlayerNotificationListener"
-
+        private const val PKG_SPOTIFY = "com.spotify.music"
+        private const val PKG_YOUTUBE_MUSIC = "com.google.android.apps.youtube.music"
+        private const val PKG_DEEZER = "deezer.android.app"
     }
+    private var lastTrackSignature: String? = null
 
+    enum class MusicPlatform { Spotify, Deezer, YoutubeMusic, }
     // TODO : Make this configurable from DataStore settings
-    public var currentPlatform: Listened_Patforms? = Listened_Patforms.Spotify // just for testing
+    public var currentPlatform: MusicPlatform? = MusicPlatform.Spotify // just for testing
 
-    enum class Listened_Patforms {
-        Spotify,
-        Deezer,
-        YoutubeMusic,
-    }
-
-    data class TrackInfos(
-        val title: String,
-        val artist: String,
-        val album: String,
-        val duration: Long,
-        val isPlaying: Boolean,
-        val platform: Listened_Patforms,
-    )
 
     override fun onListenerConnected() {
+        Log.i(TAG, "Notification listener started")
 
-        Log.i(TAG, "Notification listener started" )
-        activeNotifications?.forEach { snb ->
-            Log.d(TAG, "Notification from: ${snb.packageName}" )
-        }
+        val intent = Intent(this, BlePacketManager::class.java)
+        ContextCompat.startForegroundService(this, intent)
+        startService(intent)
+
+        activeNotifications?.forEach { onNotificationPosted(it) }
     }
 
     override fun onListenerDisconnected() {
@@ -46,48 +41,55 @@ class PlayerNotificationListener: NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
-        val pkg = sbn?.packageName
-        val extras = sbn?.notification?.extras
-        Log.i(TAG, "Notification posted: $pkg")
 
-        when (pkg) {
-            "com.spotify.music" -> {
-                if (currentPlatform == Listened_Patforms.Spotify) {
-                    val token: MediaSession.Token? = if (Build.VERSION.SDK_INT >= 33) {
-                        extras?.getParcelable<MediaSession.Token>("android.mediaSession", MediaSession.Token::class.java)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        extras?.getParcelable<MediaSession.Token>("android.mediaSession")
+        val msm = getSystemService(MediaSessionManager::class.java)
+        val component = ComponentName(this, PlayerNotificationListener::class.java)
+        val controllers = msm.getActiveSessions(component)
+
+        controllers.forEach { controller ->
+            val pkg = controller.packageName
+            when (pkg) {
+                PKG_SPOTIFY -> {
+                    if (currentPlatform == MusicPlatform.Spotify) {
+                        controllerMetadata(controller, pkg)
                     }
-                    if (token != null) {
-                        val controller = MediaController(this, token)
-                        val metadata = controller.metadata
-
-
-                        // TODO: tranform in object TrackInfos
-                        Log.d(TAG, "Metadata: title=${metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)}")
-                        Log.d(TAG, "Metadata: artist=${metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST)}")
-                        Log.d(TAG, "Metadata: album=${metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM)}")
-                        Log.d(TAG, "Metadata: duration=${metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION)}")
-                        Log.d(TAG, "Cover: ${metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) != null}")
+                }
+                PKG_DEEZER -> {
+                    if (currentPlatform == MusicPlatform.Deezer) {
+                        controllerMetadata(controller, pkg)
+                    }
+                }
+                PKG_YOUTUBE_MUSIC -> {
+                    if (currentPlatform == MusicPlatform.YoutubeMusic) {
+                        controllerMetadata(controller, pkg)
                     }
                 }
             }
-            // TODO: analyse other platforms for metadata
-            "com.google.android.apps.youtube.music" -> {
-                if (currentPlatform == Listened_Patforms.YoutubeMusic) {
-                    val title = extras?.getCharSequence("android.title") ?: "Unknown"
-                    val artist = extras?.getCharSequence("android.text") ?: "Unknown"
-                    Log.d(TAG, "YouTube Music - Title: $title, Artist: $artist")
-                }
-            }
-            "deezer.android.app" -> {
-                if (currentPlatform == Listened_Patforms.Deezer) {
-                    val title = extras?.getCharSequence("android.title") ?: "Unknown"
-                    val artist = extras?.getCharSequence("android.text") ?: "Unknown"
-                    Log.d(TAG, "Deezer - Title: $title, Artist: $artist")
-                }
-            }
+        }
+    }
+
+    private fun controllerMetadata(controller: MediaController, pkg: String) {
+        val md = controller.metadata ?: return
+        val title    = md.getString(MediaMetadata.METADATA_KEY_TITLE) ?: ""
+        val artist   = md.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: ""
+        val album    = md.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: ""
+        val duration = md.getLong(MediaMetadata.METADATA_KEY_DURATION)
+        val bmp      = md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)?: return // for waiting the cover
+
+        val signature = "$title|$artist|$album|$duration"
+        if (signature != lastTrackSignature) {
+            lastTrackSignature = signature
+
+            NowPlayingBus.emit(
+                NowPlayingBus.NowPlaying(
+                    title = title,
+                    artist = artist,
+                    album = album,
+                    durationMs = duration,
+                    bitmap = bmp
+                )
+            )
+            Log.d(TAG, "From session: $title - $artist ($album) $bmp, from : $pkg" )
         }
     }
 }
