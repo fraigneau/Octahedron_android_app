@@ -9,6 +9,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.octahedron.data.bus.NowPlayingBus
 
 class PlayerNotificationListener: NotificationListenerService() {
 
@@ -54,12 +55,12 @@ class PlayerNotificationListener: NotificationListenerService() {
                     }
                 }
                 PKG_DEEZER -> {
-                    if (currentPlatform == MusicPlatform.YoutubeMusic) {
+                    if (currentPlatform == MusicPlatform.Deezer) {
                         controllerMetadata(controller, pkg)
                     }
                 }
                 PKG_YOUTUBE_MUSIC -> {
-                    if (currentPlatform == MusicPlatform.Deezer) {
+                    if (currentPlatform == MusicPlatform.YoutubeMusic) {
                         controllerMetadata(controller, pkg)
                     }
                 }
@@ -73,13 +74,22 @@ class PlayerNotificationListener: NotificationListenerService() {
         val artist   = md.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: ""
         val album    = md.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: ""
         val duration = md.getLong(MediaMetadata.METADATA_KEY_DURATION)
-        val bmp      = md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) ?: md.getBitmap(MediaMetadata.METADATA_KEY_ART)
+        val bmp      = md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)?: return // for waiting the cover
 
         val signature = "$title|$artist|$album|$duration"
         if (signature != lastTrackSignature) {
             lastTrackSignature = signature
-            // TODO envoyer la pochette et les meta au service ble
-            Log.d(TAG, "From session: $title - $artist ($album), from : $pkg" )
+
+            NowPlayingBus.emit(
+                NowPlayingBus.NowPlaying(
+                    title = title,
+                    artist = artist,
+                    album = album,
+                    durationMs = duration,
+                    bitmap = bmp
+                )
+            )
+            Log.d(TAG, "From session: $title - $artist ($album) $bmp, from : $pkg" )
         }
     }
 }
