@@ -11,6 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.octahedron.service.BlePacketManager
+import com.octahedron.service.DataService
 import com.octahedron.ui.Menu
 import com.octahedron.ui.lang.ProvideLocalizedResources
 import com.octahedron.ui.theme.OctahedronTheme
@@ -28,8 +29,11 @@ class MainActivity : ComponentActivity() {
 
         }
 
-        val intent = Intent(this, BlePacketManager::class.java)
-        startService(intent)
+        val intentBle = Intent(this, BlePacketManager::class.java)
+        startService(intentBle)
+
+        val intentData = Intent(this, DataService::class.java)
+        startService(intentData)
 
         enableEdgeToEdge()
         setContent {
