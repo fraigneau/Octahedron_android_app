@@ -3,6 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
 
     <application
         android:allowBackup="true"
@@ -29,11 +34,20 @@
         </activity>
         <service
             android:name="com.octahedron.service.PlayerNotificationListener"
-            android:label="Spotify listener"
+            android:label="Notification listener"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+        <service
+            android:name="com.octahedron.service.BlePacketManager"
+            android:label="Ble packet manager"
+            android:permission="android.permission.BLUETOOTH"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="com.octahedron.service.BlePacketManager" />
             </intent-filter>
         </service>
     </application>

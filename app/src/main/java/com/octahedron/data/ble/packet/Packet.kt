@@ -8,7 +8,7 @@ object Packet {
 
     const val TAG = "Packet"
 
-    const val MAGIC = 0x4C465220 // "LFR "
+    const val MAGIC = 0x2052464C //     0x4C465220 // "LFR "
     const val HEADER_SIZE = 6
     const val HASH_SIZE = 4
     const val PIXEL_PER_LINE = 240
@@ -73,13 +73,15 @@ object Packet {
         fun HealthAsk(): ByteArray {
             val base = Base.make(type = Type.HEALTH).toBytes()
 
-            val buffer = ByteBuffer.allocate(HEADER_SIZE + HEALTH_STATUS_SIZE)
+            Log.i("BluetoothGatt", "HealthAsk base: ${base.size} bytes")
+
+            val buffer = ByteBuffer.allocate(HEADER_SIZE + HEALTH_STATUS_SIZE).order(java.nio.ByteOrder.LITTLE_ENDIAN)
             buffer.put(base)
             buffer.put(HealthStatus.ASKED)
 
             return buffer.array()
         }
-        fun FileWrite(crc32: CRC32, line: ByteArray): ByteArray { // check CRC32
+        fun FileWrite(crc32: CRC32, line: ByteArray): ByteArray {
             val base = Base.make(type = Type.FILE_WRITE).toBytes()
             val hashByte = ByteBuffer.allocate(HASH_SIZE).putInt(crc32.value.toInt()).array()
 
@@ -108,6 +110,17 @@ object Packet {
             val buffer = ByteBuffer.allocate(HEADER_SIZE + HASH_SIZE)
             buffer.put(base)
             buffer.put(hashByte)
+
+            return buffer.array()
+        }
+        fun FileDisplay(crc32: CRC32 ): ByteArray {
+            val base = Base.make(type = Type.FILE_DISPLAY).toBytes()
+            val hashByte = ByteBuffer.allocate(HASH_SIZE).putInt(crc32.value.toInt()).array()
+
+            val buffer = ByteBuffer.allocate(HEADER_SIZE + HASH_SIZE + 1)
+            buffer.put(base)
+            buffer.put(hashByte)
+            buffer.put(0)
 
             return buffer.array()
         }

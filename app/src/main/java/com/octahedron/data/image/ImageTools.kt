@@ -63,7 +63,6 @@ object ImageTools {
             val rgb565 = (r5 shl 11) or (g6 shl 5) or b5
             out[i++] = (rgb565).toByte()        // LSB
             out[i++] = (rgb565 ushr 8).toByte() // MSB
-            out[i++] = (rgb565).toByte()        // LSB
         }
         return out
     }

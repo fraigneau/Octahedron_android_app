@@ -1,18 +1,38 @@
 package com.octahedron.service
 
+import android.content.Intent
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSession
 import android.os.Build
+import android.os.IBinder
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import androidx.core.content.ContextCompat
 
 class PlayerNotificationListener: NotificationListenerService() {
 
+    // TODO faire ne sorte que le notificationLisner recupere la notif a la creation du service
     companion object {
         private const val TAG = "PlayerNotificationListener"
+    }
 
+    private var bleService: BlePacketManager? = null
+    private var bound = false
+    private var lastTrackSignature: String? = null
+
+    private val conn = object : android.content.ServiceConnection {
+        override fun onServiceConnected(name: android.content.ComponentName?, service: IBinder?) {
+            val b = service as? BlePacketManager.LocalBinder
+            bleService = b?.getService()
+            bound = bleService != null
+            Log.i(TAG, "Bound to BlePacketManager: $bound")
+        }
+        override fun onServiceDisconnected(name: android.content.ComponentName?) {
+            bound = false
+            bleService = null
+        }
     }
 
     // TODO : Make this configurable from DataStore settings
@@ -34,11 +54,14 @@ class PlayerNotificationListener: NotificationListenerService() {
     )
 
     override fun onListenerConnected() {
+        Log.i(TAG, "Notification listener started")
 
-        Log.i(TAG, "Notification listener started" )
-        activeNotifications?.forEach { snb ->
-            Log.d(TAG, "Notification from: ${snb.packageName}" )
-        }
+        val intent = Intent(this, BlePacketManager::class.java)
+        ContextCompat.startForegroundService(this, intent)
+        startService(intent)
+        bindService(intent, conn, BIND_AUTO_CREATE)
+
+        activeNotifications?.forEach { onNotificationPosted(it) }
     }
 
     override fun onListenerDisconnected() {
@@ -60,9 +83,27 @@ class PlayerNotificationListener: NotificationListenerService() {
                         extras?.getParcelable<MediaSession.Token>("android.mediaSession")
                     }
                     if (token != null) {
+                        Log.i(TAG, "Token retrieved successfully")
                         val controller = MediaController(this, token)
                         val metadata = controller.metadata
+                        val title    = metadata?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: ""
+                        val artist   = metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: ""
+                        val album    = metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: ""
+                        val duration = metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
+                        val bmp = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)?: return
 
+                        val signature = "$title|$artist|$album|$duration"
+
+                        if (signature == lastTrackSignature) {
+                            Log.d(TAG, "Même morceau, on ignore la mise à jour de cover.")
+                            return
+                        }
+
+                        lastTrackSignature = signature
+
+                        if (bound && bleService != null) {
+                            bleService!!.sendCover(bmp)
+                        }
 
                         // TODO: tranform in object TrackInfos
                         Log.d(TAG, "Metadata: title=${metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)}")
