@@ -23,7 +23,7 @@ import com.octahedron.data.dao.ListeningHistoryDao
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.*
 
 @AndroidEntryPoint
 class DataService : Service() {
@@ -49,10 +49,13 @@ class DataService : Service() {
         startForeground(NOTIF_ID, buildNotification("Initialisation"))
         scope.launch {
             try {
-                NowPlayingBus.flow.collectLatest { now ->
-                    Log.d(TAG, "NowPlaying reçu: ${now.title} - ${now.artist}")
-                    processNowPlaying(now)
-                }
+                NowPlayingBus.flow
+                    .map { it to stablekey(it)}
+                    .distinctUntilChanged { a, b -> a.second == b.second }
+                    .debounce (30_000)
+                    .map { it.first }
+                    .collect { processNowPlaying(it) }
+
             } catch (t: Throwable) {
                 Log.e(TAG, "Erreur collecte NowPlaying", t)
             }
@@ -144,6 +147,8 @@ class DataService : Service() {
     private suspend fun recordListening(trackId: Long) {
         listeningHistoryDao.insert(toListeningHistory(trackId, System.currentTimeMillis()))
     }
+
+    private fun stablekey(src: NowPlaying): String =" ${src.title.trim()}|${src.artist.trim()}|${src.album.trim()}|${src.durationMs}"
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
