@@ -16,6 +16,7 @@ import com.octahedron.ui.Menu
 import com.octahedron.ui.lang.ProvideLocalizedResources
 import com.octahedron.ui.theme.OctahedronTheme
 import com.octahedron.veiwmodel.SettingsViewModel
+import com.octahedron.veiwmodel.StatsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -37,8 +38,9 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            val vm: SettingsViewModel = viewModel()
-            val prefs = vm.state.collectAsStateWithLifecycle().value
+            val settingsVM: SettingsViewModel = viewModel()
+            val statsVM: StatsViewModel = viewModel()
+            val prefs = settingsVM.state.collectAsStateWithLifecycle().value
 
             // donner les permission pour le service de NotificationListener
             val enabled = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
@@ -48,7 +50,7 @@ class MainActivity : ComponentActivity() {
 
             ProvideLocalizedResources(appLanguage = prefs.language) {
                 OctahedronTheme(appTheme = prefs.theme) {
-                    Menu(vm)
+                    Menu(settingsVM, statsVM)
                 }
             }
         }

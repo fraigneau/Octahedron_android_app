@@ -3,6 +3,7 @@ package com.octahedron.ui
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -21,10 +22,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.octahedron.ui.screen.SettingsScreen
+import com.octahedron.ui.screen.StatsScreen
 import com.octahedron.veiwmodel.SettingsViewModel
+import com.octahedron.veiwmodel.StatsViewModel
 
 @Composable
-fun Menu(vm: SettingsViewModel) {
+fun Menu(settingsVM: SettingsViewModel, statsVM: StatsViewModel) {
 
     val navController = rememberNavController()
 
@@ -60,7 +63,8 @@ fun Menu(vm: SettingsViewModel) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Home.route) { HomeScreen() }
-            composable(Screen.Settings.route) { SettingsScreen(vm) }
+            composable(Screen.Stats.route) { StatsScreen(statsVM) }
+            composable(Screen.Settings.route) { SettingsScreen(settingsVM) }
         }
     }
 }
@@ -68,11 +72,14 @@ fun Menu(vm: SettingsViewModel) {
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
 
     data object Home : Screen("home", "Accueil", Icons.Filled.Home)
+
+    data object Stats : Screen("stats", "Statistiques", Icons.Filled.Menu)
     data object Settings : Screen("settings", "Réglages", Icons.Filled.Settings)
 }
 
 val bottomDestinations = listOf(
     Screen.Home,
+    Screen.Stats,
     Screen.Settings)
 
 @Composable fun HomeScreen() {
