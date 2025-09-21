@@ -53,4 +53,13 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        val intentBle = Intent(this, BlePacketManager::class.java)
+        stopService(intentBle)
+
+        val intentData = Intent(this, DataService::class.java)
+        stopService(intentData)
+    }
 }
