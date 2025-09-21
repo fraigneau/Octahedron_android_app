@@ -22,6 +22,20 @@ interface ListeningHistoryDao {
     @Query("SELECT * FROM listening_history WHERE track_uid = :trackId ORDER BY listened_at DESC")
     fun getForTrack(trackId: Long): Flow<List<ListeningWithTrackAndArtists>>
 
+    @Query("""
+        SELECT COUNT(*) FROM listening_history 
+        WHERE listened_at BETWEEN :fromTs AND :toTs
+    """)
+    fun countBetween(fromTs: Long, toTs: Long): Flow<Int>
+
+    @Transaction
+    @Query("""
+        SELECT * FROM listening_history 
+        WHERE listened_at BETWEEN :fromTs AND :toTs
+        ORDER BY listened_at DESC
+    """)
+    fun getBetween(fromTs: Long, toTs: Long): Flow<List<ListeningWithTrackAndArtists>>
+
     @Query("DELETE FROM listening_history WHERE uid = :id")
     suspend fun deleteById(id: Long)
 }
