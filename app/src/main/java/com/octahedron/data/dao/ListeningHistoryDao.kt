@@ -16,17 +16,11 @@ interface ListeningHistoryDao {
 
     @Transaction
     @Query("SELECT * FROM listening_history ORDER BY listened_at DESC LIMIT :limit")
-    fun getRecent(limit: Int): Flow<List<ListeningWithTrackAndArtists>>
+    fun getRecentWithLimit(limit: Int): Flow<List<ListeningWithTrackAndArtists>>
 
     @Transaction
     @Query("SELECT * FROM listening_history WHERE track_uid = :trackId ORDER BY listened_at DESC")
-    fun getForTrack(trackId: Long): Flow<List<ListeningWithTrackAndArtists>>
-
-    @Query("""
-        SELECT COUNT(*) FROM listening_history 
-        WHERE listened_at BETWEEN :fromTs AND :toTs
-    """)
-    fun countBetween(fromTs: Long, toTs: Long): Flow<Int>
+    fun getAllForTrack(trackId: Long): Flow<List<ListeningWithTrackAndArtists>>
 
     @Transaction
     @Query("""
@@ -35,6 +29,12 @@ interface ListeningHistoryDao {
         ORDER BY listened_at DESC
     """)
     fun getBetween(fromTs: Long, toTs: Long): Flow<List<ListeningWithTrackAndArtists>>
+
+    @Query("""
+        SELECT COUNT(*) FROM listening_history 
+        WHERE listened_at BETWEEN :fromTs AND :toTs
+    """)
+    fun countBetween(fromTs: Long, toTs: Long): Flow<Int>
 
     @Query("DELETE FROM listening_history WHERE uid = :id")
     suspend fun deleteById(id: Long)
