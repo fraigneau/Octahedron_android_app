@@ -1,4 +1,4 @@
-package com.octahedron.veiwmodel
+package com.octahedron.ui.veiwmodel
 
 import androidx.lifecycle.ViewModel
 import com.octahedron.repository.ListeningHistoryRepository

@@ -18,7 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.octahedron.veiwmodel.StatsViewModel
+import com.octahedron.ui.veiwmodel.StatsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

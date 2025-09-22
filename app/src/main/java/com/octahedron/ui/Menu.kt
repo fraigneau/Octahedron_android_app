@@ -23,8 +23,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.octahedron.ui.screen.SettingsScreen
 import com.octahedron.ui.screen.StatsScreen
-import com.octahedron.veiwmodel.SettingsViewModel
-import com.octahedron.veiwmodel.StatsViewModel
+import com.octahedron.ui.veiwmodel.SettingsViewModel
+import com.octahedron.ui.veiwmodel.StatsViewModel
 
 @Composable
 fun Menu(settingsVM: SettingsViewModel, statsVM: StatsViewModel) {

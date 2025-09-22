@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.octahedron.data.AppLanguage
 import com.octahedron.data.AppTheme
-import com.octahedron.veiwmodel.SettingsViewModel
+import com.octahedron.ui.veiwmodel.SettingsViewModel
 import com.octahedron.R
 
 @Composable

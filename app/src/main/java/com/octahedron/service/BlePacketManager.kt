@@ -9,7 +9,7 @@ import android.os.Binder
 import android.os.IBinder
 import android.util.Log
 import com.octahedron.data.ble.MyEsp32Manager
-import com.octahedron.data.ble.packet.Packet
+import com.octahedron.data.ble.Packet
 import com.octahedron.data.bus.NowPlayingBus
 import com.octahedron.data.image.ImageTools
 import kotlinx.coroutines.CoroutineScope

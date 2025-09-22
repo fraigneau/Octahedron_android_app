@@ -15,8 +15,8 @@ import com.octahedron.service.DataService
 import com.octahedron.ui.Menu
 import com.octahedron.ui.lang.ProvideLocalizedResources
 import com.octahedron.ui.theme.OctahedronTheme
-import com.octahedron.veiwmodel.SettingsViewModel
-import com.octahedron.veiwmodel.StatsViewModel
+import com.octahedron.ui.veiwmodel.SettingsViewModel
+import com.octahedron.ui.veiwmodel.StatsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 
