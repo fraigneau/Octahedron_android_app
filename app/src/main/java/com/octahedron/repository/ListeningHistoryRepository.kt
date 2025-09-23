@@ -1,12 +1,15 @@
 package com.octahedron.repository
 
 import com.octahedron.data.AppDatabase
+import com.octahedron.data.dao.AlbumDao
 import com.octahedron.data.dao.ArtistDao
 import com.octahedron.data.dao.ListeningHistoryDao
+import com.octahedron.data.dao.TrackAlbumDao
 import com.octahedron.data.dao.TrackArtistDao
 import com.octahedron.data.dao.TrackDao
 import com.octahedron.data.relation.ListeningWithTrackAndArtists
 import com.octahedron.model.Artist
+import com.octahedron.model.ListeningHistory
 import com.octahedron.model.Track
 import jakarta.inject.Inject
 import java.time.*
@@ -19,6 +22,8 @@ class ListeningHistoryRepository @Inject constructor(
     private val db: AppDatabase,
     private val trackDao: TrackDao,
     private val artistDao: ArtistDao,
+    private val albumDao: AlbumDao,
+    private val trackAlbumDao: TrackAlbumDao,
     private val trackArtistDao: TrackArtistDao,
     private val listeningHistoryDao: ListeningHistoryDao
 ) {
@@ -84,6 +89,12 @@ class ListeningHistoryRepository @Inject constructor(
             .map { rows -> aggregate(rows, fromEpochMs, toEpochMs) }
     }
 
+    suspend fun record(trackId: Long, at: Long = System.currentTimeMillis()): Long =
+        listeningHistoryDao.insert(ListeningHistory().apply {
+            this.trackId = trackId; this.listenedAt = at
+        })
+
+    suspend fun purge(olderThan: Long) = listeningHistoryDao.purgeOlderThan(olderThan)
 
     private fun aggregate(
         rows: List<ListeningWithTrackAndArtists>,

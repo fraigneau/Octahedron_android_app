@@ -10,7 +10,7 @@ object NowPlayingBus {
         val artist: String,
         val album: String,
         val durationMs: Long,
-        val bitmap: Bitmap?
+        val bitmap: Bitmap
     )
     private val _flow = MutableSharedFlow<NowPlaying>(
         replay = 1,
