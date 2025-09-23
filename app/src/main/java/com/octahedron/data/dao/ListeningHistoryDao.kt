@@ -38,4 +38,31 @@ interface ListeningHistoryDao {
 
     @Query("DELETE FROM listening_history WHERE uid = :id")
     suspend fun deleteById(id: Long)
+
+    data class CountPerId(val id: Long, val count: Int)
+
+    @Query("""
+      SELECT track_uid AS id, COUNT(*) AS count
+      FROM listening_history
+      WHERE listened_at BETWEEN :fromTs AND :toTs
+      GROUP BY track_uid
+      ORDER BY count DESC
+      LIMIT :limit
+    """)
+    suspend fun topTracksBetween(fromTs: Long, toTs: Long, limit: Int): List<CountPerId>
+
+    @Query("""
+      SELECT ta.artist_uid AS id, COUNT(*) AS count
+      FROM listening_history lh
+      JOIN track_artist ta ON ta.track_uid = lh.track_uid
+      WHERE lh.listened_at BETWEEN :fromTs AND :toTs
+      GROUP BY ta.artist_uid
+      ORDER BY count DESC
+      LIMIT :limit
+    """)
+    suspend fun topArtistsBetween(fromTs: Long, toTs: Long, limit: Int): List<CountPerId>
+
+    @Query("DELETE FROM listening_history WHERE listened_at < :olderThan")
+    suspend fun purgeOlderThan(olderThan: Long)
+
 }

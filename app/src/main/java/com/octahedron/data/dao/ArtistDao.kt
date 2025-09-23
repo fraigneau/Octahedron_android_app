@@ -9,6 +9,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.octahedron.data.relation.ArtistWithTracks
 import com.octahedron.model.Artist
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ArtistDao {
@@ -37,4 +38,11 @@ interface ArtistDao {
     @Transaction
     @Query("SELECT * FROM artist WHERE uid = :id")
     suspend fun getWithTracks(id: Long): ArtistWithTracks?
+
+    @Query("SELECT * FROM artist ORDER BY name COLLATE NOCASE")
+    fun getAllFlow(): Flow<List<Artist>>
+
+    @Query("SELECT * FROM artist WHERE name LIKE '%' || :q || '%' ORDER BY name COLLATE NOCASE")
+    fun searchByName(q: String): Flow<List<Artist>>
+
 }

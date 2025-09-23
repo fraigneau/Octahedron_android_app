@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey;
 @Entity
         (
                 tableName = "track",
-                indices = { @Index(value = {"title"}, unique = true) }
+                indices = { @Index(value = {"title"}) }
         )
 public class Track {
 
@@ -17,9 +17,6 @@ public class Track {
 
     @ColumnInfo(name = "title")
     public String title;
-
-    @ColumnInfo(name = "album_name")
-    public String albumName;
 
     @ColumnInfo(name = "duration")
     public long duration;
