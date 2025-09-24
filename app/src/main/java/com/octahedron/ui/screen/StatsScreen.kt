@@ -16,7 +16,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -27,9 +26,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.octahedron.repository.ListeningHistoryRepository
+import com.octahedron.ui.helper.AlbumArt
+import com.octahedron.ui.helper.RankedRow
+import com.octahedron.ui.helper.TopArtistsChart
+import com.octahedron.ui.helper.TopTracksCard
 import com.octahedron.ui.veiwmodel.StatsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,7 +99,7 @@ private fun Content(
     padding: PaddingValues,
     stats: ListeningHistoryRepository.PeriodStats,
     currentPeriod: StatsViewModel.Period,
-    onPeriodSelected: (StatsViewModel.Period) -> Unit
+    onPeriodSelected: (StatsViewModel.Period) -> Unit,
 ) {
     Column(
         Modifier
@@ -112,8 +114,9 @@ private fun Content(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 6.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(1.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+
             // --- KPI Cards ---
             item {
                 MetricsGrid(
@@ -123,35 +126,24 @@ private fun Content(
                 )
             }
 
-            // --- Top Tracks ---
-            item {
-                SectionHeader("Top 10 titres")
-            }
-            itemsIndexed(stats.topTracks) { index, top ->
-                RankedRow(
-                    rank = index + 1,
-                    title = top.item.title,                 // Track.title
-                    subtitle = "Écoutes : ${top.playCount}",
-                    trailing = durationOrBlank(top.item.duration)
-                )
-            }
-
-            item { Spacer(Modifier.height(8.dp)) }
+            item { Spacer(Modifier.height(2.dp)) }
 
             // --- Top Artists ---
             item {
-                SectionHeader("Top 10 artistes")
-            }
-            itemsIndexed(stats.topArtists) { index, top ->
-                RankedRow(
-                    rank = index + 1,
-                    title = top.item.name,                  // Artist.name
-                    subtitle = "Écoutes : ${top.playCount}",
-                    trailing = null
+                TopArtistsChart(
+                    artists = stats.topArtists,
+                    totalArtiste = stats.totalArtists
                 )
             }
 
-            item { Spacer(Modifier.height(32.dp)) }
+            item { Spacer(Modifier.height(2.dp)) }
+
+            // --- Top Tracks ---
+            item {
+                TopTracksCard(
+                    tracks = stats.topItems,
+                )
+            }
         }
     }
 }
@@ -204,14 +196,6 @@ private fun MetricsGrid(
             StatCard(
                 title = "Temps d’écoute",
                 value = formatHms(totalPlayTimeMs),
-                modifier = Modifier.weight(1f)
-            )
-            StatCard(
-                title = "Moy. par play",
-                value = formatHmsSafe(
-                    if (totalPlays > 0) totalPlayTimeMs / totalPlays else 0
-                ),
-                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -227,18 +211,19 @@ private fun StatCard(
         Column(
             Modifier
                 .padding(16.dp)
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(6.dp))
             Text(
                 text = value,
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
         }
     }
@@ -254,42 +239,8 @@ private fun SectionHeader(text: String) {
     )
 }
 
-@Composable
-private fun RankedRow(
-    rank: Int,
-    title: String,
-    subtitle: String? = null,
-    trailing: String? = null
-) {
-    ListItem(
-        overlineContent = {
-            Text(
-                "#$rank",
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelMedium
-            )
-        },
-        headlineContent = {
-            Text(
-                title,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
-        supportingContent = if (subtitle != null) {
-            { Text(subtitle) }
-        } else null,
-        trailingContent = if (trailing != null) {
-            { Text(trailing, style = MaterialTheme.typography.labelLarge) }
-        } else null
-    )
-}
-
 private fun durationOrBlank(ms: Long?): String? =
     ms?.let { formatHms(it) }
-
-private fun formatHmsSafe(ms: Long?): String =
-    formatHms(ms ?: 0L)
 
 private fun formatHms(totalMs: Long): String {
     val totalSec = (totalMs / 1000).coerceAtLeast(0)
