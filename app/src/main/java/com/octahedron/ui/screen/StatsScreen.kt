@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -23,13 +22,12 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.octahedron.repository.ListeningHistoryRepository
-import com.octahedron.ui.helper.AlbumArt
-import com.octahedron.ui.helper.RankedRow
 import com.octahedron.ui.helper.TopArtistsChart
 import com.octahedron.ui.helper.TopTracksCard
 import com.octahedron.ui.veiwmodel.StatsViewModel
@@ -37,11 +35,6 @@ import com.octahedron.ui.veiwmodel.StatsViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsScreen(vm: StatsViewModel) {
-
-
-// TODO: Implement stats of week, month, year maybe alltime and top artists
-// TODO: Use a menu for selecting the period ! (week, month, year, alltime)
-// TODO: TimePlay, Top Artists, Top Albums, Top Tracks, etc.
 
     val ui = vm.uiState.collectAsState().value
 
@@ -101,6 +94,9 @@ private fun Content(
     currentPeriod: StatsViewModel.Period,
     onPeriodSelected: (StatsViewModel.Period) -> Unit,
 ) {
+    val nameOf = remember(stats) { ListeningHistoryRepository.makeArtistNameResolver(stats) }
+    val top3ById = remember(stats) { ListeningHistoryRepository.makeTopTracksProviderByArtistId(stats, topN = 3) }
+
     Column(
         Modifier
             .padding(padding)
@@ -132,7 +128,9 @@ private fun Content(
             item {
                 TopArtistsChart(
                     artists = stats.topArtists,
-                    totalArtiste = stats.totalArtists
+                    totalArtiste = stats.totalArtists,
+                    top3ProviderFrom = top3ById,
+                    labelResolver = nameOf,
                 )
             }
 

@@ -27,8 +27,36 @@ class ListeningHistoryRepository @Inject constructor(
         val uniqueTracks: Int,
         val totalArtists: Int,
         val topItems: List<TopItem<ListeningWithTrackAndArtistsAndAlbum>>,
-        val topArtists: List<TopItem<Artist>>
+        val topArtists: List<TopItem<Artist>>,
+        val allTrackItems: List<TopItem<ListeningWithTrackAndArtistsAndAlbum>>
     )
+
+    companion object {
+        fun makeArtistNameResolver(
+            stats: PeriodStats,
+            fallback: (Long) -> String = { id -> "Artiste $id" }
+        ): (Long) -> String {
+            val map = stats.topArtists.associate { it.item.uid to it.item.name }
+            return { id -> map[id] ?: fallback(id) }
+        }
+
+        fun makeTopTracksProviderByArtistId(
+            stats: PeriodStats,
+            topN: Int = 3
+        ): (Long) -> List<Pair<String, Int>> {
+            return { artistId ->
+                stats.allTrackItems
+                    .filter { ti -> ti.item.artists.any { a -> a.uid == artistId } }
+                    .groupBy { it.item.track.uid }
+                    .map { (_, list) ->
+                        val title = list.first().item.track.title
+                        title to list.sumOf { it.playCount }
+                    }
+                    .sortedByDescending { it.second }
+                    .take(topN)
+            }
+        }
+    }
 
     private fun now(zone: ZoneId): ZonedDateTime = ZonedDateTime.now(zone)
 
@@ -84,21 +112,21 @@ class ListeningHistoryRepository @Inject constructor(
     ): PeriodStats {
         val totalPlays = rows.size
 
-        val byTrackId: Map<Long, List<ListeningWithTrackAndArtistsAndAlbum>> =
-            rows.groupBy { it.track.uid }
+        val byTrackId = rows.groupBy { it.track.uid }
 
         val uniqueTracks = byTrackId.size
 
         val totalPlayTimeMs = rows.sumOf { it.track.duration }
 
-        val topItems: List<TopItem<ListeningWithTrackAndArtistsAndAlbum>> =
+        val allTrackItems: List<TopItem<ListeningWithTrackAndArtistsAndAlbum>> =
             byTrackId
-                .map { (trackId, list) ->
+                .map { (_, list) ->
                     val representative = list.first()
                     TopItem(item = representative, playCount = list.size)
                 }
                 .sortedByDescending { it.playCount }
-                .take(10)
+
+        val topItems = allTrackItems.take(10)
 
         val artistCountsById = mutableMapOf<Long, Int>()
         val anyArtistRef = mutableMapOf<Long, Artist>()
@@ -130,7 +158,8 @@ class ListeningHistoryRepository @Inject constructor(
             uniqueTracks = uniqueTracks,
             totalArtists = totalArtists,
             topItems = topItems,
-            topArtists = topArtists
+            topArtists = topArtists,
+            allTrackItems = allTrackItems,
         )
     }
 }

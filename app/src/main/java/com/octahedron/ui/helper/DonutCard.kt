@@ -1,6 +1,7 @@
 package com.octahedron.ui.helper
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -17,11 +18,15 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -33,13 +38,14 @@ import ir.ehsannarmani.compose_charts.PieChart
 import ir.ehsannarmani.compose_charts.models.Pie
 import kotlin.math.roundToInt
 
-// TODO: check total artiste
 @Composable
 fun TopArtistsChart(
     artists: List<ListeningHistoryRepository.TopItem<Artist>>,
     totalArtiste: Int,
+    top3ProviderFrom: (artistName: Long) -> List<Pair<String, Int>>,
     maxSlices: Int = 6,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    labelResolver: (Long) -> String = { it.toString() }
 ) {
     val top = artists.take(maxSlices)
     val others = artists.drop(maxSlices).sumOf { it.playCount }
@@ -50,7 +56,7 @@ fun TopArtistsChart(
             add(
                 Pie(
                     data = t.playCount.toDouble(),
-                    label = t.item.name,
+                    label = t.item.uid.toString(),
                     color = palette[i % palette.size]
                 )
             )
@@ -87,9 +93,15 @@ fun TopArtistsChart(
                     totalLabelBottom = "Artistes",
                     ringWidth = 36.dp,
                     gapDegrees = 2.5f,
+                    top3Provider = top3ProviderFrom,
+                    labelResolver = labelResolver,
                 )
             }
-            PieChartLegend(pies = pies, total = totalArtiste)
+            PieChartLegend(
+                pies = pies,
+                total = totalArtiste,
+                labelResolver = { lbl -> lbl.toLongOrNull()?.let(labelResolver) ?: lbl }
+            )
 
         }
     }
@@ -102,13 +114,22 @@ fun DonutCard(
     totalLabelBottom: String? = null,
     ringWidth: Dp = 28.dp,
     gapDegrees: Float = 2.5f,
+    top3Provider: (artistId: Long) -> List<Pair<String, Int>> = { emptyList() },
+    labelResolver: (Long) -> String = { it.toString() },
     modifier: Modifier = Modifier
         .fillMaxWidth()
         .height(260.dp)
         .padding(8.dp)
 ) {
-    val donutData = remember(data, ringWidth) {
-        data.map { it.copy(style = Pie.Style.Stroke(ringWidth)) }
+    var selectedId by remember { mutableStateOf<Long?>(null) }
+
+    val donutData = remember(data, ringWidth, selectedId) {
+        data.map { p ->
+            p.copy(
+                style = Pie.Style.Stroke(ringWidth),
+                selected = (p.label == selectedId?.toString())
+            )
+        }
     }
 
     BoxWithConstraints(
@@ -119,10 +140,16 @@ fun DonutCard(
         val minSide = min(maxWidth, maxHeight)
         val innerCircleSize = (minSide - (ringWidth * 2) - 8.dp).coerceAtLeast(0.dp)
 
-
         PieChart(
             data = donutData,
             spaceDegree = gapDegrees,
+            onPieClick = { pie ->
+                val id = pie.label?.toLongOrNull()
+                selectedId = if (id == null) selectedId else if (selectedId == id) null else id
+            },
+            selectedScale = 1.08f,
+            selectedPaddingDegree = 5f,
+            style = Pie.Style.Stroke(ringWidth),
             modifier = Modifier.matchParentSize()
         )
 
@@ -130,32 +157,65 @@ fun DonutCard(
             Modifier
                 .size(innerCircleSize)
                 .clip(CircleShape)
-                .background(cs.background),
+                .background(cs.background)
+                .pointerInput(Unit) { detectTapGestures { selectedId = null } },
             contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                totalLabelTop?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
+            if (selectedId == null) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    totalLabelTop?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    totalLabelBottom?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = cs.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
                 }
-                totalLabelBottom?.let {
+            } else {
+                val top3 = remember(selectedId) { top3Provider(selectedId!!) }
+                val artistName = labelResolver(selectedId!!)
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
                     Text(
-                        text = it,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = cs.onSurfaceVariant,
-                        maxLines = 1
+                        artistName,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
+                    top3.take(3).forEach { (title, count) ->
+                        Text(
+                            text = "• $title — ${count}×",
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+
 @Composable
-private fun PieChartLegend(pies: List<Pie>, total: Int) {
+private fun PieChartLegend(
+    pies: List<Pie>,
+    total: Int,
+    labelResolver: (String) -> String = { it }
+) {
     val safeTotal = total.coerceAtLeast(1)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         pies.forEach { p ->
@@ -172,7 +232,7 @@ private fun PieChartLegend(pies: List<Pie>, total: Int) {
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = (p.label ?: "—"),
+                    text = labelResolver(p.label ?: "—"),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.weight(1f),
                     maxLines = 1,
