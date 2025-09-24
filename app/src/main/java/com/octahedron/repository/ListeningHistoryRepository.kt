@@ -7,10 +7,8 @@ import com.octahedron.data.dao.ListeningHistoryDao
 import com.octahedron.data.dao.TrackAlbumDao
 import com.octahedron.data.dao.TrackArtistDao
 import com.octahedron.data.dao.TrackDao
-import com.octahedron.data.relation.ListeningWithTrackAndArtists
+import com.octahedron.data.relation.ListeningWithTrackAndArtistsAndAlbum
 import com.octahedron.model.Artist
-import com.octahedron.model.ListeningHistory
-import com.octahedron.model.Track
 import jakarta.inject.Inject
 import java.time.*
 import java.time.temporal.TemporalAdjusters
@@ -38,7 +36,7 @@ class ListeningHistoryRepository @Inject constructor(
         val totalPlayTimeMs: Long,
         val totalPlays: Int,
         val uniqueTracks: Int,
-        val topTracks: List<TopItem<Track>>,
+        val topItems: List<TopItem<ListeningWithTrackAndArtistsAndAlbum>>,
         val topArtists: List<TopItem<Artist>>
     )
 
@@ -82,22 +80,17 @@ class ListeningHistoryRepository @Inject constructor(
 
     fun statsBetween(fromEpochMs: Long, toEpochMs: Long): Flow<PeriodStats> {
         val sqlFrom = fromEpochMs
-        val sqlToInclusive = toEpochMs - 1L // pour convertir [from, to) en BETWEEN inclusif
+        val sqlToInclusive = toEpochMs - 1L
 
         return listeningHistoryDao
             .getBetween(sqlFrom, sqlToInclusive)
             .map { rows -> aggregate(rows, fromEpochMs, toEpochMs) }
     }
 
-    suspend fun record(trackId: Long, at: Long = System.currentTimeMillis()): Long =
-        listeningHistoryDao.insert(ListeningHistory().apply {
-            this.trackId = trackId; this.listenedAt = at
-        })
-
     suspend fun purge(olderThan: Long) = listeningHistoryDao.purgeOlderThan(olderThan)
 
     private fun aggregate(
-        rows: List<ListeningWithTrackAndArtists>,
+        rows: List<ListeningWithTrackAndArtistsAndAlbum>,
         fromMs: Long,
         toMs: Long
     ): PeriodStats {
@@ -112,13 +105,14 @@ class ListeningHistoryRepository @Inject constructor(
             .map { it.track.duration }
             .sum()
 
-        val topTracks = rows.asSequence()
-            .groupingBy { it.track }
+        val topItems = rows.asSequence()
+            .groupingBy { it }
             .eachCount()
             .entries
             .sortedByDescending { it.value }
             .take(10)
             .map { TopItem(item = it.key, playCount = it.value) }
+            .toList()
 
         val artistCounts = HashMap<Artist, Int>()
         rows.forEach { l ->
@@ -137,7 +131,7 @@ class ListeningHistoryRepository @Inject constructor(
             totalPlayTimeMs = totalPlayTimeMs,
             totalPlays = totalPlays,
             uniqueTracks = uniqueTracks,
-            topTracks = topTracks,
+            topItems = topItems,
             topArtists = topArtists
         )
     }

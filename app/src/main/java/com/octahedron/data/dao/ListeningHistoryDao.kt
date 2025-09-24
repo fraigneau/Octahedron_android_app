@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 import com.octahedron.data.relation.ListeningWithTrackAndArtists
+import com.octahedron.data.relation.ListeningWithTrackAndArtistsAndAlbum
 import com.octahedron.model.ListeningHistory
 import kotlinx.coroutines.flow.Flow
 
@@ -28,7 +29,7 @@ interface ListeningHistoryDao {
         WHERE listened_at BETWEEN :fromTs AND :toTs
         ORDER BY listened_at DESC
     """)
-    fun getBetween(fromTs: Long, toTs: Long): Flow<List<ListeningWithTrackAndArtists>>
+    fun getBetween(fromTs: Long, toTs: Long): Flow<List<ListeningWithTrackAndArtistsAndAlbum>>
 
     @Query("""
         SELECT COUNT(*) FROM listening_history 

@@ -11,7 +11,7 @@ class Converters {
     fun fromBitmap(bmp: Bitmap?): ByteArray? =
         bmp?.let {
             ByteArrayOutputStream().apply {
-                it.compress(Bitmap.CompressFormat.JPEG, 100, this)
+                it.compress(Bitmap.CompressFormat.JPEG, 10, this)
             }.toByteArray()
         }
 

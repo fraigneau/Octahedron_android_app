@@ -60,6 +60,7 @@ data class ListeningWithTrackAndArtistsAndAlbum(
         entityColumn = "uid"
     )
     val track: Track,
+
     @Relation(
         parentColumn = "track_uid",
         entity = Artist::class,
@@ -71,9 +72,16 @@ data class ListeningWithTrackAndArtistsAndAlbum(
         )
     )
     val artists: List<Artist>,
+
     @Relation(
-        parentColumn = "album_uid",
-        entityColumn = "uid"
+        parentColumn = "track_uid",
+        entity = Album::class,
+        entityColumn = "uid",
+        associateBy = Junction(
+            value = TrackAlbum::class,
+            parentColumn = "track_uid",
+            entityColumn = "album_uid"
+        )
     )
-    val album: Album?
+    val album: Album
 )
