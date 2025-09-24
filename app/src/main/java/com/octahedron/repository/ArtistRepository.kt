@@ -1,24 +1,12 @@
 package com.octahedron.repository
 
-import com.octahedron.data.AppDatabase
-import com.octahedron.data.dao.AlbumDao
 import com.octahedron.data.dao.ArtistDao
-import com.octahedron.data.dao.ListeningHistoryDao
-import com.octahedron.data.dao.TrackAlbumDao
-import com.octahedron.data.dao.TrackArtistDao
-import com.octahedron.data.dao.TrackDao
 import com.octahedron.model.Artist
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
 
 class ArtistRepository @Inject constructor(
-    private val db: AppDatabase,
-    private val trackDao: TrackDao,
     private val artistDao: ArtistDao,
-    private val albumDao: AlbumDao,
-    private val trackAlbumDao: TrackAlbumDao,
-    private val trackArtistDao: TrackArtistDao,
-    private val listeningHistoryDao: ListeningHistoryDao
 ) {
 
     suspend fun insertArtist(artist: Artist): Long {

@@ -1,28 +1,17 @@
 package com.octahedron.repository
 
-import com.octahedron.data.AppDatabase
-import com.octahedron.data.dao.AlbumDao
-import com.octahedron.data.dao.ArtistDao
 import com.octahedron.data.dao.ListeningHistoryDao
-import com.octahedron.data.dao.TrackAlbumDao
-import com.octahedron.data.dao.TrackArtistDao
-import com.octahedron.data.dao.TrackDao
 import com.octahedron.data.relation.ListeningWithTrackAndArtistsAndAlbum
 import com.octahedron.model.Artist
 import jakarta.inject.Inject
-import java.time.*
-import java.time.temporal.TemporalAdjusters
-import java.time.DayOfWeek
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.DayOfWeek
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.temporal.TemporalAdjusters
 
 class ListeningHistoryRepository @Inject constructor(
-    private val db: AppDatabase,
-    private val trackDao: TrackDao,
-    private val artistDao: ArtistDao,
-    private val albumDao: AlbumDao,
-    private val trackAlbumDao: TrackAlbumDao,
-    private val trackArtistDao: TrackArtistDao,
     private val listeningHistoryDao: ListeningHistoryDao
 ) {
     data class TopItem<T>(
@@ -36,13 +25,12 @@ class ListeningHistoryRepository @Inject constructor(
         val totalPlayTimeMs: Long,
         val totalPlays: Int,
         val uniqueTracks: Int,
+        val totalArtists: Int,
         val topItems: List<TopItem<ListeningWithTrackAndArtistsAndAlbum>>,
         val topArtists: List<TopItem<Artist>>
     )
 
     private fun now(zone: ZoneId): ZonedDateTime = ZonedDateTime.now(zone)
-
-    // ---- Périodes prédéfinies ----
 
     fun statsToday(zone: ZoneId): Flow<PeriodStats> {
         val todayStart = now(zone).toLocalDate().atStartOfDay(zone)
@@ -96,34 +84,43 @@ class ListeningHistoryRepository @Inject constructor(
     ): PeriodStats {
         val totalPlays = rows.size
 
-        val uniqueTracks = rows.asSequence()
-            .map { it.track.uid }
-            .toSet()
-            .size
+        val byTrackId: Map<Long, List<ListeningWithTrackAndArtistsAndAlbum>> =
+            rows.groupBy { it.track.uid }
 
-        val totalPlayTimeMs = rows.asSequence()
-            .map { it.track.duration }
-            .sum()
+        val uniqueTracks = byTrackId.size
 
-        val topItems = rows.asSequence()
-            .groupingBy { it }
-            .eachCount()
-            .entries
-            .sortedByDescending { it.value }
-            .take(10)
-            .map { TopItem(item = it.key, playCount = it.value) }
-            .toList()
+        val totalPlayTimeMs = rows.sumOf { it.track.duration }
 
-        val artistCounts = HashMap<Artist, Int>()
+        val topItems: List<TopItem<ListeningWithTrackAndArtistsAndAlbum>> =
+            byTrackId
+                .map { (trackId, list) ->
+                    val representative = list.first()
+                    TopItem(item = representative, playCount = list.size)
+                }
+                .sortedByDescending { it.playCount }
+                .take(10)
+
+        val artistCountsById = mutableMapOf<Long, Int>()
+        val anyArtistRef = mutableMapOf<Long, Artist>()
+
         rows.forEach { l ->
             l.artists.forEach { a ->
-                artistCounts[a] = (artistCounts[a] ?: 0) + 1
+                val id = a.uid
+                artistCountsById[id] = (artistCountsById[id] ?: 0) + 1
+                anyArtistRef.putIfAbsent(id, a)
             }
         }
-        val topArtists = artistCounts.entries
-            .sortedByDescending { it.value }
-            .take(10)
-            .map { TopItem(item = it.key, playCount = it.value) }
+
+        val topArtists: List<TopItem<Artist>> =
+            artistCountsById
+                .entries
+                .sortedByDescending { it.value }
+                .take(10)
+                .map { (artistId, count) ->
+                    TopItem(item = anyArtistRef[artistId]!!, playCount = count)
+                }
+
+        val totalArtists = artistCountsById.size
 
         return PeriodStats(
             fromEpochMs = fromMs,
@@ -131,6 +128,7 @@ class ListeningHistoryRepository @Inject constructor(
             totalPlayTimeMs = totalPlayTimeMs,
             totalPlays = totalPlays,
             uniqueTracks = uniqueTracks,
+            totalArtists = totalArtists,
             topItems = topItems,
             topArtists = topArtists
         )
