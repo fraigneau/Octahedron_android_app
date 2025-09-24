@@ -1,5 +1,6 @@
 package com.octahedron.ui
 
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -56,11 +57,12 @@ fun Menu(settingsVM: SettingsViewModel, statsVM: StatsViewModel) {
             }
         }
     }
-    ){ innerPadding ->
+    ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
             composable(Screen.Home.route) { HomeScreen() }
             composable(Screen.Stats.route) { StatsScreen(statsVM) }
@@ -72,7 +74,6 @@ fun Menu(settingsVM: SettingsViewModel, statsVM: StatsViewModel) {
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
 
     data object Home : Screen("home", "Accueil", Icons.Filled.Home)
-
     data object Stats : Screen("stats", "Statistiques", Icons.Filled.Menu)
     data object Settings : Screen("settings", "Réglages", Icons.Filled.Settings)
 }
