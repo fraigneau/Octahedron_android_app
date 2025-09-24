@@ -62,7 +62,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.7")
     implementation(libs.androidx.appcompat)
 
-    // Roomb
+    // Room
     implementation("androidx.room:room-runtime:2.7.0")
     implementation("androidx.room:room-ktx:2.7.0")
     implementation(libs.androidx.room.ktx)
@@ -80,6 +80,8 @@ dependencies {
 
     // Graphique
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.foundation.layout)
     implementation ("io.github.ehsannarmani:compose-charts:0.1.11")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.9.2")
