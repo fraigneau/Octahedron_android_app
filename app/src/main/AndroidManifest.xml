@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -48,6 +49,14 @@
             android:exported="true" >
             <intent-filter>
                 <action android:name="com.octahedron.service.BlePacketManager" />
+            </intent-filter>
+        </service>
+        <service
+            android:name="com.octahedron.service.DataService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.octahedron.service.DataService" />
             </intent-filter>
         </service>
     </application>

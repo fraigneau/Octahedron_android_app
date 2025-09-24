@@ -1,7 +1,8 @@
-package com.octahedron.data.ble.packet
+package com.octahedron.data.ble
 
 import android.util.Log
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.zip.CRC32
 
 object Packet {
@@ -75,7 +76,7 @@ object Packet {
 
             Log.i("BluetoothGatt", "HealthAsk base: ${base.size} bytes")
 
-            val buffer = ByteBuffer.allocate(HEADER_SIZE + HEALTH_STATUS_SIZE).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+            val buffer = ByteBuffer.allocate(HEADER_SIZE + HEALTH_STATUS_SIZE).order(ByteOrder.LITTLE_ENDIAN)
             buffer.put(base)
             buffer.put(HealthStatus.ASKED)
 
@@ -113,7 +114,7 @@ object Packet {
 
             return buffer.array()
         }
-        fun FileDisplay(crc32: CRC32 ): ByteArray {
+        fun FileDisplay(crc32: CRC32): ByteArray {
             val base = Base.make(type = Type.FILE_DISPLAY).toBytes()
             val hashByte = ByteBuffer.allocate(HASH_SIZE).putInt(crc32.value.toInt()).array()
 

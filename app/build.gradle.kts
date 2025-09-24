@@ -62,7 +62,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.7")
     implementation(libs.androidx.appcompat)
 
-    // Roomb
+    // Room
     implementation("androidx.room:room-runtime:2.7.0")
     implementation("androidx.room:room-ktx:2.7.0")
     implementation(libs.androidx.room.ktx)
@@ -77,6 +77,14 @@ dependencies {
     implementation("no.nordicsemi.android:ble:2.11.0")
     implementation("no.nordicsemi.android:ble-ktx:2.11.0")
     implementation("no.nordicsemi.android:ble-common:2.11.0")
+
+    // Graphique
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.foundation.layout)
+    implementation ("io.github.ehsannarmani:compose-charts:0.1.11")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.navigation:navigation-compose:2.9.2")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

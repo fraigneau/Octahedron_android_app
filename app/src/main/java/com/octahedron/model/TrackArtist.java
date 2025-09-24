@@ -21,7 +21,6 @@ public class TrackArtist {
     public long trackId;
     @ColumnInfo(name = "artist_uid")
     public long artistId;
-    @NonNull
     @ColumnInfo(name = "role", defaultValue = "'main'")
-    public String role = "main";
+    public String role;
 }

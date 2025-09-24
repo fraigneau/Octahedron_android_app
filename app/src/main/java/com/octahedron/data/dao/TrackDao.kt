@@ -51,4 +51,15 @@ interface TrackDao {
     @Query("SELECT * FROM track WHERE title LIKE '%' || :query || '%' ORDER BY title COLLATE NOCASE")
     fun searchByTitle(query: String): Flow<List<Track>>
 
+    @Query("SELECT * FROM track WHERE title = :title COLLATE NOCASE LIMIT 1")
+    suspend fun getByTitleCaseInsensitive(title: String): Track?
+
+    @Query("""
+       SELECT * FROM track
+       WHERE title = :title COLLATE NOCASE AND duration = :duration
+       LIMIT 1
+   """)
+    suspend fun getByTitleAndDuration(title: String, duration: Long): Track?
+
+
 }

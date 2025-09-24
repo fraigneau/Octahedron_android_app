@@ -11,10 +11,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.octahedron.service.BlePacketManager
+import com.octahedron.service.DataService
 import com.octahedron.ui.Menu
 import com.octahedron.ui.lang.ProvideLocalizedResources
 import com.octahedron.ui.theme.OctahedronTheme
-import com.octahedron.veiwmodel.SettingsViewModel
+import com.octahedron.ui.veiwmodel.SettingsViewModel
+import com.octahedron.ui.veiwmodel.StatsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -28,13 +30,17 @@ class MainActivity : ComponentActivity() {
 
         }
 
-        val intent = Intent(this, BlePacketManager::class.java)
-        startService(intent)
+        val intentBle = Intent(this, BlePacketManager::class.java)
+        startService(intentBle)
+
+        val intentData = Intent(this, DataService::class.java)
+        startService(intentData)
 
         enableEdgeToEdge()
         setContent {
-            val vm: SettingsViewModel = viewModel()
-            val prefs = vm.state.collectAsStateWithLifecycle().value
+            val settingsVM: SettingsViewModel = viewModel()
+            val statsVM: StatsViewModel = viewModel()
+            val prefs = settingsVM.state.collectAsStateWithLifecycle().value
 
             // donner les permission pour le service de NotificationListener
             val enabled = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
@@ -44,9 +50,18 @@ class MainActivity : ComponentActivity() {
 
             ProvideLocalizedResources(appLanguage = prefs.language) {
                 OctahedronTheme(appTheme = prefs.theme) {
-                    Menu(vm)
+                    Menu(settingsVM, statsVM)
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        val intentBle = Intent(this, BlePacketManager::class.java)
+        stopService(intentBle)
+
+        val intentData = Intent(this, DataService::class.java)
+        stopService(intentData)
     }
 }

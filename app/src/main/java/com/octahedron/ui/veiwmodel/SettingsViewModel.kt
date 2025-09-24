@@ -1,4 +1,4 @@
-package com.octahedron.veiwmodel
+package com.octahedron.ui.veiwmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

@@ -52,3 +52,36 @@ data class ListeningWithTrackAndArtists(
     )
     val artists: List<Artist>
 )
+
+data class ListeningWithTrackAndArtistsAndAlbum(
+    @Embedded val history: ListeningHistory,
+    @Relation(
+        parentColumn = "track_uid",
+        entityColumn = "uid"
+    )
+    val track: Track,
+
+    @Relation(
+        parentColumn = "track_uid",
+        entity = Artist::class,
+        entityColumn = "uid",
+        associateBy = Junction(
+            value = TrackArtist::class,
+            parentColumn = "track_uid",
+            entityColumn = "artist_uid"
+        )
+    )
+    val artists: List<Artist>,
+
+    @Relation(
+        parentColumn = "track_uid",
+        entity = Album::class,
+        entityColumn = "uid",
+        associateBy = Junction(
+            value = TrackAlbum::class,
+            parentColumn = "track_uid",
+            entityColumn = "album_uid"
+        )
+    )
+    val album: Album
+)
