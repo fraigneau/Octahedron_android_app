@@ -11,7 +11,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.octahedron.data.bus.NowPlayingBus
 
-class PlayerNotificationListener: NotificationListenerService() {
+class NotificationManager: NotificationListenerService() {
 
     companion object {
         private const val TAG = "PlayerNotificationListener"
@@ -43,7 +43,7 @@ class PlayerNotificationListener: NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
 
         val msm = getSystemService(MediaSessionManager::class.java)
-        val component = ComponentName(this, PlayerNotificationListener::class.java)
+        val component = ComponentName(this, NotificationManager::class.java)
         val controllers = msm.getActiveSessions(component)
 
         controllers.forEach { controller ->
@@ -90,6 +90,9 @@ class PlayerNotificationListener: NotificationListenerService() {
                 )
             )
             Log.d(TAG, "From session: $title - $artist ($album) $bmp, from : $pkg" )
+            val intent = Intent(this, BlePacketManager::class.java)
+            ContextCompat.startForegroundService(this, intent)
+            startService(intent)
         }
     }
 }
