@@ -9,7 +9,7 @@ object Packet {
 
     const val TAG = "Packet"
 
-    const val MAGIC = 0x2052464C //     0x4C465220 // "LFR "
+    const val MAGIC = 0x2052464C // "LFR "
     const val HEADER_SIZE = 6
     const val HASH_SIZE = 4
     const val PIXEL_PER_LINE = 240
@@ -38,6 +38,11 @@ object Packet {
         const val FILE_WRITE_RESPONSE: Byte = 4
         const val FILE_DISPLAY: Byte = 5 // idk if needed
         const val FILE_DELETE: Byte = 6
+    }
+
+    object Response {
+        const val OK: Byte = 0
+        const val ERROR: Byte = 1
     }
 
     data class Base(
@@ -96,11 +101,13 @@ object Packet {
         fun FileExists(crc32: CRC32): ByteArray {
             val base = Base.make(type = Type.FILE_EXISTS).toBytes()
             val hashByte = ByteBuffer.allocate(HASH_SIZE).putInt(crc32.value.toInt()).array()
+            val ok = 0.toByte()
 
 
-            val buffer = ByteBuffer.allocate(HEADER_SIZE + HASH_SIZE)
+            val buffer = ByteBuffer.allocate(HEADER_SIZE + HASH_SIZE + 1)
             buffer.put(base)
             buffer.put(hashByte)
+            buffer.put(ok)
 
             return buffer.array()
         }
@@ -127,59 +134,56 @@ object Packet {
         }
     }
 
-    fun parse(buffer: ByteBuffer) {
-
-        if (buffer.limit() < HEADER_SIZE + HEALTH_STATUS_SIZE) return
-
-        val baseBuffer = viewRange(buffer, 0, HEADER_SIZE).array()
-        val base = Base.parse(baseBuffer) ?: return
-
-        // TODO think exception and logging
-        if (base.magic != MAGIC) return
-        if (base.direction != Direction.DIR_ESP_TO_DEVICE) return
-
-        when (base.type) {
-            Type.HEALTH -> {
-                val healthStatus = viewRange(buffer, HEADER_SIZE, HEADER_SIZE + HEALTH_STATUS_SIZE).get()
-                when (healthStatus) {
-                    HealthStatus.OK -> {
-                        Log.d(TAG,"Health OK")
-
-                    }
-                    HealthStatus.DISPLAY_ERROR -> {
-                        Log.d(TAG,"Display error")
-                    }
-                    HealthStatus.SD_ERROR -> {
-                        Log.d(TAG,"SD card error")
-                    }
-                    HealthStatus.UNK_ERROR -> {
-                        Log.d(TAG,"Unknown error")
-                    }
-                    else -> {
-                        Log.e(TAG,"Unknown health status")
-                    }
-                }
-            }
-            Type.FILE_WRITE_RESPONSE -> {
-
-            }
-            Type.FILE_EXISTS -> {
-
-            }
-            else -> {
-                Log.e(TAG,"Unknown type of packet")
-            }
-        }
-
+    sealed interface Parsed {
+        data class Health(val status: Byte) : Parsed
+        data class FileExists(val exists: Boolean) : Parsed
+        data class FileWriteResponse(val ok: Boolean) : Parsed
+        data class Error(val reason: String) : Parsed
     }
 
-    private fun viewRange(buffer: ByteBuffer, start: Int, end: Int): ByteBuffer {
-        require(start in 0..end) { "start/end invalides" }
-        require(end <= buffer.limit()) { "end dépasse limit=${buffer.limit()}" }
+    fun parse(packet: ByteArray?): Parsed {
+        if (packet == null) return Parsed.Error("null packet")
 
-        val duplicateBuffer = buffer.duplicate()
-        duplicateBuffer.position(start)
-        duplicateBuffer.limit(end)
-        return duplicateBuffer.slice()
+        val bb = ByteBuffer.wrap(packet)
+
+        if (bb.limit() < HEADER_SIZE + 1) return Parsed.Error("too short")
+
+        val baseHeader = ByteArray(HEADER_SIZE).also {
+            val dup = bb.duplicate()
+            dup.position(0); dup.limit(HEADER_SIZE)
+            dup.get(it)
+        }
+
+        val base = Base.parse(baseHeader) ?: return Parsed.Error("base parse failed")
+        if (base.magic != MAGIC) return Parsed.Error("bad magic")
+        if (base.direction != Direction.DIR_ESP_TO_DEVICE) return Parsed.Error("bad direction")
+
+        // -- payload view
+        val payload = bb.duplicate().apply {
+            position(HEADER_SIZE)
+            limit(bb.limit())
+        }
+
+        return when (base.type) {
+            Type.HEALTH -> {
+                if (payload.remaining() < 1) return Parsed.Error("health payload too short")
+                val s = payload.get()
+                Parsed.Health(status = s)
+            }
+            Type.FILE_EXISTS -> {
+                if (payload.remaining() < 1) return Parsed.Error("exists payload too short")
+                val last = run {
+                    val d = payload.duplicate()
+                    d.position(d.limit() - 1)
+                    d.get()
+                }
+                Parsed.FileExists(exists = (last.toInt() != 0))
+            }
+            Type.FILE_WRITE_RESPONSE -> {
+                val ok = true
+                Parsed.FileWriteResponse(ok)
+            }
+            else -> Parsed.Error("unknown type ${base.type}")
+        }
     }
 }
