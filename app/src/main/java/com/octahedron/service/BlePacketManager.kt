@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import no.nordicsemi.android.ble.observer.ConnectionObserver
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
@@ -44,26 +45,25 @@ class BlePacketManager : Service() {
         private const val TAG = "BlePacketManager"
         // TODO: recup de la config DataStore
         private const val MAC = "A0:85:E3:EA:14:09" // MAC stable de ton ESP32
+        private const val LINE_WIDTH_PX = 240
+        private const val BYTES_PER_PIXEL = 2
+        private const val LINE_SIZE = LINE_WIDTH_PX * BYTES_PER_PIXEL
     }
 
     private lateinit var manager: BluetoothDeviceManager
     private val binder = LocalBinder()
-    private val serviceJob = SupervisorJob()
-    private val serviceScope = CoroutineScope(Dispatchers.Main.immediate + serviceJob)
+    inner class LocalBinder : Binder()
 
     @Volatile private var bleReady = false
     @Volatile private var wantStayConnected = true
     @Volatile private var lastDisplayedCrc: Long? = null
 
+    private val serviceJob = SupervisorJob()
     private var flowJob: Job? = null
     private var keepAliveJob: Job? = null
     private var reconnectJob: Job? = null
 
-    private val LINE_WIDTH_PX = 240
-    private val BYTES_PER_PIXEL = 2
-    private val LINE_SIZE = LINE_WIDTH_PX * BYTES_PER_PIXEL
-
-    inner class LocalBinder : Binder()
+    private val serviceScope = CoroutineScope(Dispatchers.Main.immediate + serviceJob)
 
     override fun onCreate() {
         super.onCreate()
@@ -71,7 +71,7 @@ class BlePacketManager : Service() {
         hookConnectionObserver()
         startCollectingNowPlaying()
 
-        ensureConnected()
+        //ensureConnected()
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
@@ -152,6 +152,15 @@ class BlePacketManager : Service() {
         keepAliveJob = null
     }
 
+    private fun startCollectingNowPlaying() {
+        flowJob?.cancel()
+        flowJob = serviceScope.launch {
+            NowPlayingBus.flow.collectLatest { np ->
+                Log.i(TAG, "Now playing: $np, bleReady=$bleReady, bitmap=${np.bitmap}")
+                ensureConnectedAndSend(np.bitmap)
+            }
+        }
+    }
     private fun scheduleReconnect(device: BluetoothDevice) {
         if (!wantStayConnected) return
         if (reconnectJob?.isActive == true) return
@@ -178,6 +187,7 @@ class BlePacketManager : Service() {
 
                 val found = try {
                     if (checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED) {
+                        Log.d(TAG, "Permission BLUETOOTH_SCAN granted")
                         scanOnce(serviceUuid = BluetoothDeviceManager.SERVICE_UUID, mac = MAC, timeoutMs = 8_000) != null
                     } else {
                         Log.w(TAG, "Permission BLUETOOTH_SCAN not granted")
@@ -202,27 +212,6 @@ class BlePacketManager : Service() {
         }
     }
 
-    private fun ensureConnected() {
-        if (!wantStayConnected) return
-        val dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(MAC)
-        manager.connect(dev)
-            .useAutoConnect(false)
-            .retry(2, 200)
-            .done { bleReady = true; startKeepAlive() }
-            .fail { _, _ -> Log.w(TAG, "ensureConnected échec"); bleReady = false; scheduleReconnect(dev) }
-            .enqueue()
-    }
-
-    private fun startCollectingNowPlaying() {
-        flowJob?.cancel()
-        flowJob = serviceScope.launch {
-            NowPlayingBus.flow.collectLatest { np ->
-                Log.i(TAG, "Now playing: $np, bleReady=$bleReady, bitmap=${np.bitmap}")
-                ensureConnectedAndSend(np.bitmap)
-            }
-        }
-    }
-
     private fun ensureConnectedAndSend(bmp: Bitmap) {
         if (manager.isConnected && bleReady) {
             startSendCover(bmp)
@@ -231,7 +220,7 @@ class BlePacketManager : Service() {
         val dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(MAC)
         scheduleReconnect(dev)
         serviceScope.launch {
-            repeat(30) { // ~15 s max
+            repeat(30) {
                 if (manager.isConnected && bleReady) {
                     startSendCover(bmp); return@launch
                 }
@@ -326,54 +315,61 @@ class BlePacketManager : Service() {
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
-    private suspend fun scanOnce(
+    suspend fun scanOnce(
         serviceUuid: UUID? = null,
         mac: String? = null,
         timeoutMs: Long = 10_000L
-    ): BluetoothDevice? = suspendCancellableCoroutine { cont ->
-        val adapter = BluetoothAdapter.getDefaultAdapter()
-        val scanner = adapter?.bluetoothLeScanner
-        if (adapter == null || !adapter.isEnabled || scanner == null) {
-            cont.resume(null); return@suspendCancellableCoroutine
-        }
-
-        val filters = when {
-            serviceUuid != null && mac != null ->
-                listOf(ScanFilter.Builder().setServiceUuid(ParcelUuid(serviceUuid)).setDeviceAddress(mac).build())
-            serviceUuid != null ->
-                listOf(ScanFilter.Builder().setServiceUuid(ParcelUuid(serviceUuid)).build())
-            mac != null ->
-                listOf(ScanFilter.Builder().setDeviceAddress(mac).build())
-            else -> emptyList()
-        }
-        val settings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
-
-        val resumed = AtomicBoolean(false)
-        lateinit var cb: ScanCallback
-        fun stop() = runCatching { scanner.stopScan(cb) }
-
-        cb = object : ScanCallback() {
-            override fun onScanResult(callbackType: Int, result: ScanResult) {
-                if (resumed.compareAndSet(false, true)) { stop(); cont.resume(result.device) }
+    ): BluetoothDevice? = withTimeoutOrNull(timeoutMs) {
+        suspendCancellableCoroutine { cont ->
+            val adapter = BluetoothAdapter.getDefaultAdapter()
+            val scanner = adapter?.bluetoothLeScanner
+            if (adapter == null || !adapter.isEnabled || scanner == null) {
+                cont.resume(null); return@suspendCancellableCoroutine
             }
-            override fun onBatchScanResults(results: MutableList<ScanResult>) {
-                val first = results.firstOrNull()
-                if (first != null && resumed.compareAndSet(false, true)) { stop(); cont.resume(first.device) }
-            }
-            override fun onScanFailed(errorCode: Int) {
-                if (resumed.compareAndSet(false, true)) { stop(); cont.resume(null) }
-            }
-        }
 
-        try { scanner.startScan(filters, settings, cb) }
-        catch (_: Throwable) { if (resumed.compareAndSet(false, true)) cont.resume(null); return@suspendCancellableCoroutine }
+            val filters = when {
+                serviceUuid != null && mac != null ->
+                    listOf(
+                        ScanFilter.Builder()
+                            .setServiceUuid(ParcelUuid(serviceUuid))
+                            .setDeviceAddress(mac)
+                            .build()
+                    )
+                serviceUuid != null ->
+                    listOf(ScanFilter.Builder().setServiceUuid(ParcelUuid(serviceUuid)).build())
+                mac != null ->
+                    listOf(ScanFilter.Builder().setDeviceAddress(mac).build())
+                else -> emptyList()
+            }
+            val settings = ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .build()
 
-        val handler = Handler(Looper.getMainLooper())
-        val timeout = Runnable {
-            if (resumed.compareAndSet(false, true)) { stop(); cont.resume(null) }
+            lateinit var cb: ScanCallback
+            fun stop() = runCatching { scanner.stopScan(cb) }
+
+            cb = object : ScanCallback() {
+                override fun onScanResult(callbackType: Int, result: ScanResult) {
+                    if (cont.isActive) { stop(); cont.resume(result.device) }
+                }
+                override fun onBatchScanResults(results: MutableList<ScanResult>) {
+                    val first = results.firstOrNull()
+                    if (first != null && cont.isActive) { stop(); cont.resume(first.device) }
+                }
+                override fun onScanFailed(errorCode: Int) {
+                    if (cont.isActive) { stop(); cont.resume(null) }
+                }
+            }
+
+            try {
+                scanner.startScan(filters, settings, cb)
+            } catch (_: Throwable) {
+                if (cont.isActive) cont.resume(null)
+                return@suspendCancellableCoroutine
+            }
+
+            cont.invokeOnCancellation { stop() }
         }
-        handler.postDelayed(timeout, timeoutMs)
-        cont.invokeOnCancellation { handler.removeCallbacks(timeout); stop() }
     }
 
     private fun Int.toConnReason(): String = when (this) {
