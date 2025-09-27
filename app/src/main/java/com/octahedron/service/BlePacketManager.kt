@@ -12,9 +12,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Binder
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
 import androidx.annotation.RequiresPermission
@@ -35,7 +33,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import no.nordicsemi.android.ble.observer.ConnectionObserver
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.CRC32
 import kotlin.coroutines.resume
 
@@ -55,8 +52,10 @@ class BlePacketManager : Service() {
     inner class LocalBinder : Binder()
 
     @Volatile private var bleReady = false
+    @Volatile private var firstSend = false
     @Volatile private var wantStayConnected = true
     @Volatile private var lastDisplayedCrc: Long? = null
+    @Volatile private var lastNowPlaying: NowPlayingBus.NowPlaying? = null
 
     private val serviceJob = SupervisorJob()
     private var flowJob: Job? = null
@@ -70,8 +69,6 @@ class BlePacketManager : Service() {
         manager = BluetoothDeviceManager(applicationContext)
         hookConnectionObserver()
         startCollectingNowPlaying()
-
-        //ensureConnected()
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
@@ -102,6 +99,8 @@ class BlePacketManager : Service() {
             override fun onDeviceReady(device: BluetoothDevice) {
                 Log.i(TAG, "Device ready ${device.address} (services ok, MTU/notifs set)")
                 bleReady = true
+                firstSend = true
+                lastNowPlaying?.let { ensureConnectedAndSend(it.bitmap) }
                 startKeepAlive()
             }
             override fun onDeviceDisconnecting(device: BluetoothDevice) {
@@ -157,6 +156,7 @@ class BlePacketManager : Service() {
         flowJob = serviceScope.launch {
             NowPlayingBus.flow.collectLatest { np ->
                 Log.i(TAG, "Now playing: $np, bleReady=$bleReady, bitmap=${np.bitmap}")
+                lastNowPlaying = np
                 ensureConnectedAndSend(np.bitmap)
             }
         }
@@ -236,9 +236,13 @@ class BlePacketManager : Service() {
                 val imgBytes = ImageTools.toRgb565BytesAuto(img)
 
                 val crc32 = CRC32().apply { update(imgBytes) }
-                if (lastDisplayedCrc == crc32.value) {
-                    Log.i(TAG, "Même cover (CRC identique), envoi ignoré")
-                    return@launch
+                if (!firstSend) {
+                    if (lastDisplayedCrc == crc32.value) {
+                        Log.i(TAG, "Même cover (CRC identique), envoi ignoré")
+                        return@launch
+                    }
+                } else {
+                    firstSend = false
                 }
 
                 val isOnSd = sendFileExists(crc32)
