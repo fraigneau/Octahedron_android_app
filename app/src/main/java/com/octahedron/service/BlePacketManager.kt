@@ -31,6 +31,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import no.nordicsemi.android.ble.observer.ConnectionObserver
@@ -60,6 +61,10 @@ class BlePacketManager : Service() {
     private var flowJob: Job? = null
     private var keepAliveJob: Job? = null
     private var reconnectJob: Job? = null
+
+    private val LINE_WIDTH_PX = 240
+    private val BYTES_PER_PIXEL = 2
+    private val LINE_SIZE = LINE_WIDTH_PX * BYTES_PER_PIXEL
 
     inner class LocalBinder : Binder()
 
@@ -242,82 +247,80 @@ class BlePacketManager : Service() {
     private fun startSendCover(img: Bitmap) {
         serviceScope.launch(Dispatchers.IO) {
             try {
-                val totalStart = System.currentTimeMillis()
-
-                val t0 = System.currentTimeMillis()
                 val imgBytes = ImageTools.toRgb565BytesAuto(img)
-                Log.i(TAG, "Transformation de l'image en ${System.currentTimeMillis() - t0} ms")
 
                 val crc32 = CRC32().apply { update(imgBytes) }
 
-                val existsDeferred = CompletableDeferred<Boolean>()
-                manager.sendAndWaitForResponse(
-                    payload = Packet.Build.FileExists(crc32),
-                    onResponse = { _, data ->
-                        val bytes = data.value ?: run {
-                            existsDeferred.complete(false)
-                            return@sendAndWaitForResponse
-                        }
-                        val parsed = Packet.parse(bytes)
-                        val exists = (parsed is Packet.Parsed.FileExists) && parsed.exists
-                        existsDeferred.complete(exists)
-                    },
-                    onFail = { _, status ->
-                        Log.w(TAG, "FileExists failed: $status")
-                        existsDeferred.complete(false)
-                    },
-                    timeoutMs = 1_000
-                )
-
-                val isOnSd = try {
-                    withTimeout(1_200) { existsDeferred.await() }
-                } catch (_: Throwable) {
-                    false
-                }
-
+                val isOnSd = sendFileExists(crc32)
                 if (isOnSd) {
                     Log.i(TAG, "Le fichier est déjà présent, on skip l'envoi")
                 } else {
-                    val chunksStart = System.currentTimeMillis()
-                    val lineSize = 240 * 2
-                    var offset = 0
-                    while (offset < imgBytes.size && manager.isConnected) {
-                        val end = minOf(offset + lineSize, imgBytes.size)
-                        val chunk = imgBytes.copyOfRange(offset, end)
-
-                        val done = CompletableDeferred<Boolean>()
-                        manager.send(
-                            payload = Packet.Build.FileWrite(crc32, chunk),
-                            onSent = { _, _ -> done.complete(true) },
-                            onFail = { _, status -> Log.e(TAG, "Failed chunk: $status"); done.complete(false) }
-                        )
-                        if (!done.await()) break
-                        offset = end
-                    }
-                    Log.i(TAG, "Envoi des chunks en ${System.currentTimeMillis() - chunksStart} ms")
+                    sendChunkImg(crc32, imgBytes)
                 }
 
-                val fileDisplayStart = System.currentTimeMillis()
-                val finalAck = CompletableDeferred<Boolean>()
-                manager.send(
-                    payload = Packet.Build.FileDisplay(crc32),
-                    onSent = { _, _ ->
-                        Log.i(TAG, "Envoi du FileDisplay en ${System.currentTimeMillis() - fileDisplayStart} ms")
-                        finalAck.complete(true)
-                    },
-                    onFail = { _, status ->
-                        Log.e(TAG, "Failed FileDisplay: $status")
-                        finalAck.complete(false)
-                    }
-                )
-                finalAck.await()
-
-                Log.i(TAG, "Temps total (transfo + chunks + FileDisplay) : ${System.currentTimeMillis() - totalStart} ms")
+                val displayOk = sendFileDisplay(crc32)
+                if (!displayOk) Log.w(TAG, "Avertissement: FileDisplay non confirmé")
 
             } catch (t: Throwable) {
                 Log.e(TAG, "startSendCover error", t)
             }
         }
+    }
+
+    private suspend fun sendFileExists(crc32: CRC32): Boolean {
+        val existsDeferred = CompletableDeferred<Boolean>()
+
+        manager.sendAndWaitForResponse(
+            payload = Packet.Build.FileExists(crc32),
+            onResponse = { _, data ->
+                val bytes = data.value
+                if (bytes == null) {
+                    existsDeferred.complete(false)
+                    return@sendAndWaitForResponse
+                }
+                val parsed = Packet.parse(bytes)
+                val exists = (parsed is Packet.Parsed.FileExists) && parsed.exists
+                existsDeferred.complete(exists)
+            },
+            onFail = { _, status -> Log.w(TAG, "FileExists failed: $status"); existsDeferred.complete(false) },
+            timeoutMs = 1_000
+        )
+
+        return existsDeferred.await()
+    }
+
+    private suspend fun sendChunkImg(crc32: CRC32, imgBytes: ByteArray) {
+        var offset = 0
+        while (offset < imgBytes.size && manager.isConnected) {
+            val end = minOf(offset + LINE_SIZE, imgBytes.size)
+            val chunk = imgBytes.copyOfRange(offset, end)
+
+            val done = CompletableDeferred<Boolean>()
+            manager.send(
+                payload = Packet.Build.FileWrite(crc32, chunk),
+                onSent = { _, _ -> done.complete(true) },
+                onFail = { _, status ->
+                    Log.e(TAG, "Failed chunk: $status")
+                    done.complete(false)
+                }
+            )
+
+            if (!done.await()) break
+            offset = end
+        }
+    }
+
+    private suspend fun sendFileDisplay(crc32: CRC32): Boolean {
+        val ack = CompletableDeferred<Boolean>()
+        manager.send(
+            payload = Packet.Build.FileDisplay(crc32),
+            onSent = { _, _ -> ack.complete(true) },
+            onFail = { _, status ->
+                Log.e(TAG, "Failed FileDisplay: $status")
+                ack.complete(false)
+            }
+        )
+        return ack.await()
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
