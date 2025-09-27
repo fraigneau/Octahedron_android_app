@@ -31,9 +31,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withTimeout
 import no.nordicsemi.android.ble.observer.ConnectionObserver
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
@@ -46,8 +44,6 @@ class BlePacketManager : Service() {
         private const val TAG = "BlePacketManager"
         // TODO: recup de la config DataStore
         private const val MAC = "A0:85:E3:EA:14:09" // MAC stable de ton ESP32
-        private const val NOTIF_ID = 1001
-        private const val CH_ID = "ble_ch"
     }
 
     private lateinit var manager: BluetoothDeviceManager
@@ -57,6 +53,7 @@ class BlePacketManager : Service() {
 
     @Volatile private var bleReady = false
     @Volatile private var wantStayConnected = true
+    @Volatile private var lastDisplayedCrc: Long? = null
 
     private var flowJob: Job? = null
     private var keepAliveJob: Job? = null
@@ -227,7 +224,7 @@ class BlePacketManager : Service() {
     }
 
     private fun ensureConnectedAndSend(bmp: Bitmap) {
-        if (manager.isConnected) {
+        if (manager.isConnected && bleReady) {
             startSendCover(bmp)
             return
         }
@@ -250,6 +247,10 @@ class BlePacketManager : Service() {
                 val imgBytes = ImageTools.toRgb565BytesAuto(img)
 
                 val crc32 = CRC32().apply { update(imgBytes) }
+                if (lastDisplayedCrc == crc32.value) {
+                    Log.i(TAG, "Même cover (CRC identique), envoi ignoré")
+                    return@launch
+                }
 
                 val isOnSd = sendFileExists(crc32)
                 if (isOnSd) {
@@ -260,6 +261,7 @@ class BlePacketManager : Service() {
 
                 val displayOk = sendFileDisplay(crc32)
                 if (!displayOk) Log.w(TAG, "Avertissement: FileDisplay non confirmé")
+                else lastDisplayedCrc = crc32.value
 
             } catch (t: Throwable) {
                 Log.e(TAG, "startSendCover error", t)
@@ -290,21 +292,21 @@ class BlePacketManager : Service() {
     }
 
     private suspend fun sendChunkImg(crc32: CRC32, imgBytes: ByteArray) {
+        val buf = ByteArray(LINE_SIZE)
         var offset = 0
+
         while (offset < imgBytes.size && manager.isConnected) {
             val end = minOf(offset + LINE_SIZE, imgBytes.size)
-            val chunk = imgBytes.copyOfRange(offset, end)
+            val len = end - offset
+            System.arraycopy(imgBytes, offset, buf, 0, len)
+            val chunk = if (len == LINE_SIZE) buf else buf.copyOf(len)
 
             val done = CompletableDeferred<Boolean>()
             manager.send(
                 payload = Packet.Build.FileWrite(crc32, chunk),
                 onSent = { _, _ -> done.complete(true) },
-                onFail = { _, status ->
-                    Log.e(TAG, "Failed chunk: $status")
-                    done.complete(false)
-                }
+                onFail = { _, status -> Log.e(TAG, "Failed chunk: $status"); done.complete(false) }
             )
-
             if (!done.await()) break
             offset = end
         }
