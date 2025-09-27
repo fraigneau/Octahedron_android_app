@@ -30,8 +30,6 @@ class DataService : Service() {
 
     companion object {
         private const val TAG = "DataService"
-        private const val CHANNEL_ID = "data_service_channel"
-        private const val NOTIF_ID = 1
         private const val DEBOUNCE_MS = 30_000L
     }
 
@@ -43,8 +41,6 @@ class DataService : Service() {
     override fun onCreate() {
         super.onCreate()
         Log.i(TAG, "DataService created")
-        createNotificationChannel()
-        startForeground(NOTIF_ID, buildNotification("Initialisation"))
 
         scope.launch {
             try {
@@ -132,23 +128,4 @@ class DataService : Service() {
     private fun stableKey(src: NowPlaying): String =
         "${src.title.orEmpty().trim()}|${src.artist.orEmpty().trim()}|${src.album.orEmpty().trim()}|${src.durationMs}"
 
-    // ---------- Notification ----------
-
-    private fun createNotificationChannel() {
-        val nm = getSystemService<NotificationManager>() ?: return
-        val ch = NotificationChannel(
-            CHANNEL_ID,
-            "Data Service",
-            NotificationManager.IMPORTANCE_MIN
-        )
-        nm.createNotificationChannel(ch)
-    }
-
-    private fun buildNotification(text: String): Notification =
-        NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Data service")
-            .setContentText(text)
-            .setSmallIcon(android.R.drawable.stat_notify_sync)
-            .setOngoing(true)
-            .build()
 }
