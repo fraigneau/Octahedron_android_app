@@ -9,7 +9,16 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.content.ContextCompat
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.stringPreferencesKey
+import com.octahedron.data.AppMusic
 import com.octahedron.data.bus.NowPlayingBus
+import com.octahedron.data.userPrefsDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 class NotificationManager: NotificationListenerService() {
 
@@ -19,11 +28,15 @@ class NotificationManager: NotificationListenerService() {
         private const val PKG_YOUTUBE_MUSIC = "com.google.android.apps.youtube.music"
         private const val PKG_DEEZER = "deezer.android.app"
     }
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
     private var lastTrackSignature: String? = null
 
-    enum class MusicPlatform { Spotify, Deezer, YoutubeMusic, }
-    // TODO : Make this configurable from DataStore settings
-    public var currentPlatform: MusicPlatform? = MusicPlatform.Spotify // just for testing
+    private object PrefKeys {
+        val MUSIC = stringPreferencesKey("music")
+    }
+    enum class MusicPlatform { Spotify, Deezer, YoutubeMusic }
+    var currentPlatform: MusicPlatform? = null
 
 
     override fun onListenerConnected() {
@@ -33,6 +46,20 @@ class NotificationManager: NotificationListenerService() {
         ContextCompat.startForegroundService(this, intent)
         startService(intent)
 
+        val dataStore = applicationContext.userPrefsDataStore
+
+        serviceScope.launch {
+            dataStore.data
+                .map { prefs: Preferences -> prefs[PrefKeys.MUSIC] }
+                .collect { musicAppPref ->
+                    currentPlatform = when (AppMusic.fromPref(musicAppPref)) {
+                        AppMusic.SPOTIFY -> MusicPlatform.Spotify
+                        AppMusic.DEEZER -> MusicPlatform.Deezer
+                        AppMusic.YOUTUBE_MUSIC -> MusicPlatform.YoutubeMusic
+                    }
+                Log.d(TAG, "Current music platform: $currentPlatform")
+                }
+        }
         activeNotifications?.forEach { onNotificationPosted(it) }
     }
 

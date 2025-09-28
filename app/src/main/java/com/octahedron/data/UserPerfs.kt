@@ -10,10 +10,12 @@ import com.octahedron.R
 data class UserPrefs(
     val theme: AppTheme,
     val nickname: String,
-    val language: AppLanguage = AppLanguage.ENGLISH,
+    val espMac: String,
+    val language: AppLanguage,
+    val musicApp: AppMusic,
 ) {
     companion object {
-        val DEFAULT = UserPrefs(AppTheme.SYSTEM, "nickname")
+        val DEFAULT = UserPrefs(AppTheme.SYSTEM, "nickname", "00:00:00:00:00:00", AppLanguage.ENGLISH, AppMusic.SPOTIFY)
     }
 }
 
@@ -39,6 +41,21 @@ enum class AppLanguage(val tag: String, @StringRes val labelRes: Int) {
             "fr"     -> FRENCH
             "en"     -> ENGLISH
             else     -> SYSTEM
+        }
+    }
+}
+
+enum class AppMusic(val tag: String, @StringRes val labelRes: Int) {
+    SPOTIFY("com.spotify.music", R.string.music_app_spotify),
+    YOUTUBE_MUSIC("com.google.android.apps.youtube.music", R.string.music_app_youtube_music),
+    DEEZER("deezer.android.app", R.string.music_app_deezer);
+
+    companion object {
+        fun fromPref(value: String?): AppMusic = when (value) {
+            "com.spotify.music" -> SPOTIFY
+            "com.google.android.apps.youtube.music" -> YOUTUBE_MUSIC
+            "deezer.android.app" -> DEEZER
+            else -> SPOTIFY
         }
     }
 }
