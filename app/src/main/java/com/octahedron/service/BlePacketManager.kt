@@ -16,10 +16,13 @@ import android.os.IBinder
 import android.os.ParcelUuid
 import android.util.Log
 import androidx.annotation.RequiresPermission
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.octahedron.data.ble.BluetoothDeviceManager
 import com.octahedron.data.ble.Packet
 import com.octahedron.data.bus.NowPlayingBus
 import com.octahedron.data.image.ImageTools
+import com.octahedron.data.userPrefsDataStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +30,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -40,13 +44,15 @@ class BlePacketManager : Service() {
 
     companion object {
         private const val TAG = "BlePacketManager"
-        // TODO: recup de la config DataStore
-        private const val MAC = "A0:85:E3:EA:14:09" // MAC stable de ton ESP32
         private const val LINE_WIDTH_PX = 240
         private const val BYTES_PER_PIXEL = 2
         private const val LINE_SIZE = LINE_WIDTH_PX * BYTES_PER_PIXEL
     }
 
+    private object PrefKeys {
+        val ESP_MAC_KEY = stringPreferencesKey("esp_mac")
+    }
+    private var macAddress: String? = null
     private lateinit var manager: BluetoothDeviceManager
     private val binder = LocalBinder()
     inner class LocalBinder : Binder()
@@ -69,6 +75,16 @@ class BlePacketManager : Service() {
         manager = BluetoothDeviceManager(applicationContext)
         hookConnectionObserver()
         startCollectingNowPlaying()
+
+        val dataStore = applicationContext.userPrefsDataStore
+        serviceScope.launch {
+            dataStore.data
+                .map { prefs: Preferences -> prefs[PrefKeys.ESP_MAC_KEY] }
+                .collect { mac ->
+                    macAddress = mac
+                    Log.d(TAG, "MAC ESP32 à utiliser: $macAddress")
+                }
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
@@ -186,9 +202,13 @@ class BlePacketManager : Service() {
                 if (attached.await()) break
 
                 val found = try {
-                    if (checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED) {
+                    val mac = macAddress
+                    if (mac.isNullOrBlank()) {
+                        Log.w(TAG, "Impossible de scanner: adresse MAC ESP32 non définie dans le DataStore")
+                        false
+                    } else if (checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED) {
                         Log.d(TAG, "Permission BLUETOOTH_SCAN granted")
-                        scanOnce(serviceUuid = BluetoothDeviceManager.SERVICE_UUID, mac = MAC, timeoutMs = 8_000) != null
+                        scanOnce(serviceUuid = BluetoothDeviceManager.SERVICE_UUID, mac = mac, timeoutMs = 8_000) != null
                     } else {
                         Log.w(TAG, "Permission BLUETOOTH_SCAN not granted")
                         false
@@ -213,11 +233,16 @@ class BlePacketManager : Service() {
     }
 
     private fun ensureConnectedAndSend(bmp: Bitmap) {
+        val mac = macAddress
+        if (mac.isNullOrBlank()) {
+            Log.w(TAG, "Impossible d'envoyer: adresse MAC ESP32 non définie dans le DataStore")
+            return
+        }
         if (manager.isConnected && bleReady) {
             startSendCover(bmp)
             return
         }
-        val dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(MAC)
+        val dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(mac)
         scheduleReconnect(dev)
         serviceScope.launch {
             repeat(30) {
