@@ -36,55 +36,6 @@ fun SettingsScreen(vm: SettingsViewModel) {
             ThemeChip(stringResource(R.string.theme_dark),   prefs.theme == AppTheme.DARK)   { vm.onThemeSelected(AppTheme.DARK) }
         }
 
-        /** Nickname Input **/
-        OutlinedTextField(
-            value = prefs.nickname,
-            onValueChange = vm::onNicknameChanged,
-            label = { Text(stringResource(R.string.nickname)) },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        /** ESP MAC Input **/
-        val macParts = remember(prefs.espMac) {
-            prefs.espMac.split(":").map { it.padStart(2, '0').take(2) }.toMutableList()
-                .let { while (it.size < 6) it.add(""); it }
-        }
-        val partStates = remember(macParts) { macParts.map { mutableStateOf(it) } }
-        Column(modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
-                value = partStates.joinToString(":") { it.value.padStart(2, '0') },
-                onValueChange = {},
-                label = { Text(stringResource(R.string.esp_mac)) },
-                enabled = false,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                partStates.forEachIndexed { i, state ->
-                    OutlinedTextField(
-                        value = state.value,
-                        onValueChange = { newValue ->
-                            val filtered = newValue.filter { it.isDigit() || it.lowercaseChar() in 'a'..'f' }
-                                .take(2).uppercase()
-                            state.value = filtered
-                            val newMac = partStates.joinToString(":") { it.value.padStart(2, '0') }
-                            vm.onEspMacChanged(newMac)
-                        },
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 1.dp)
-                    )
-                    if (i < 5) {
-                        Text(":", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 16.dp))
-                    }
-                }
-            }
-        }
-
         /** Language Dropdown Menu **/
         Text(stringResource(R.string.settings_language))
         var langExpanded by remember { mutableStateOf(false) }
@@ -123,6 +74,14 @@ fun SettingsScreen(vm: SettingsViewModel) {
             }
         }
 
+        /** Nickname Input **/
+        OutlinedTextField(
+            value = prefs.nickname,
+            onValueChange = vm::onNicknameChanged,
+            label = { Text(stringResource(R.string.nickname)) },
+            modifier = Modifier.fillMaxWidth()
+        )
+
         /** Music App Dropdown Menu **/
         Text(stringResource(R.string.settings_music_app))
         var expanded by remember { mutableStateOf(false) }
@@ -160,6 +119,20 @@ fun SettingsScreen(vm: SettingsViewModel) {
                 }
             }
         }
+
+        /** ESP MAC Input **/
+        OutlinedTextField(
+            value = prefs.espMac,
+            onValueChange = { newValue ->
+                val regex = Regex("^[0-9A-Fa-f:]{0,17}$")
+                if (regex.matches(newValue)) {
+                    vm.onEspMacChanged(newValue.uppercase())
+                }
+            },
+            label = { Text(stringResource(R.string.esp_mac)) },
+            placeholder = { Text("AA:BB:CC:DD:EE:FF") },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
