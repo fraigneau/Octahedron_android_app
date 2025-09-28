@@ -23,5 +23,36 @@
     <string name="music_app_deezer" translatable="false">Deezer</string>
     <string name="esp_mac" translatable="false">Mac Adress</string>
 
+    <!-- Artiste Chard -->
+        <!-- Stats / errors -->
+        <string name="error_with_message">Oops: %1$s</string>
+        <string name="retry">Retry</string>
+
+        <!-- Period tabs -->
+        <string name="period_day">Day</string>
+        <string name="period_week">Week</string>
+        <string name="period_month">Month</string>
+        <string name="period_year">Year</string>
+        <string name="period_all">All</string>
+
+        <!-- KPIs -->
+        <string name="metric_plays">Plays</string>
+        <string name="metric_unique_tracks">Unique tracks</string>
+        <string name="metric_listening_time">Listening time</string>
+
+        <!-- Top artists / tracks -->
+        <string name="top_artists">Top artists</string>
+        <string name="top_tracks">Top tracks</string>
+        <string name="artists_label">Artists</string>
+        <string name="others">Others</string>
+
+        <!-- Misc -->
+        <string name="unknown_artist">Unknown</string>
+        <plurals name="play_count" translatable="false">
+            <item quantity="one">%1$d play</item>
+            <item quantity="other">%1$d plays</item>
+        </plurals>
+        <string name="album_cover_content_desc">Album cover</string>
+
 
 </resources>

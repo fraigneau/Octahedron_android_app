@@ -25,12 +25,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.octahedron.repository.ListeningHistoryRepository
 import com.octahedron.ui.helper.TopArtistsChart
 import com.octahedron.ui.helper.TopTracksCard
 import com.octahedron.ui.veiwmodel.StatsViewModel
+import com.octahedron.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,10 +59,10 @@ fun StatsScreen(vm: StatsViewModel) {
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Oups : ${ui.error}")
+                    Text(stringResource(R.string.error_with_message, ui.error ?: ""))
                     Spacer(Modifier.height(8.dp))
                     Button(onClick = {  }) {
-                        Text("Réessayer")
+                        Text(stringResource(R.string.retry))
                     }
                 }
             }
@@ -152,11 +154,11 @@ private fun PeriodTabs(
     onSelect: (StatsViewModel.Period) -> Unit
 ) {
     val periods = listOf(
-        StatsViewModel.Period.TODAY to "Jour",
-        StatsViewModel.Period.WEEK to "Semaine",
-        StatsViewModel.Period.MONTH to "Mois",
-        StatsViewModel.Period.YEAR to "Année",
-        StatsViewModel.Period.ALL_TIME to "Tout"
+        StatsViewModel.Period.TODAY to stringResource(R.string.period_day),
+        StatsViewModel.Period.WEEK to stringResource(R.string.period_week),
+        StatsViewModel.Period.MONTH to stringResource(R.string.period_month),
+        StatsViewModel.Period.YEAR to stringResource(R.string.period_year),
+        StatsViewModel.Period.ALL_TIME to stringResource(R.string.period_all)
     )
     val selectedIndex = periods.indexOfFirst { it.first == current }.coerceAtLeast(0)
 
@@ -180,19 +182,19 @@ private fun MetricsGrid(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatCard(
-                title = "Lectures",
+                title = stringResource(R.string.metric_plays),
                 value = "%,d".format(totalPlays),
                 modifier = Modifier.weight(1f)
             )
             StatCard(
-                title = "Titres uniques",
+                title = stringResource(R.string.metric_unique_tracks),
                 value = "%,d".format(uniqueTracks),
                 modifier = Modifier.weight(1f)
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatCard(
-                title = "Temps d’écoute",
+                title = stringResource(R.string.metric_listening_time),
                 value = formatHms(totalPlayTimeMs),
             )
         }
@@ -226,6 +228,7 @@ private fun StatCard(
         }
     }
 }
+
 
 @Composable
 private fun SectionHeader(text: String) {

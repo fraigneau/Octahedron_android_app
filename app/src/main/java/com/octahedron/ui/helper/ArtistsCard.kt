@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -37,6 +38,8 @@ import com.octahedron.repository.ListeningHistoryRepository
 import ir.ehsannarmani.compose_charts.PieChart
 import ir.ehsannarmani.compose_charts.models.Pie
 import kotlin.math.roundToInt
+import com.octahedron.R
+
 
 @Composable
 fun TopArtistsChart(
@@ -50,6 +53,7 @@ fun TopArtistsChart(
     val top = artists.take(maxSlices)
     val others = artists.drop(maxSlices).sumOf { it.playCount }
     val palette = donutPalette()
+    val othersLabel = stringResource(R.string.others)
 
     val pies = buildList {
         top.forEachIndexed { i, t ->
@@ -65,7 +69,7 @@ fun TopArtistsChart(
             add(
                 Pie(
                     data = others.toDouble(),
-                    label = "Autres",
+                    label = othersLabel,
                     color = palette[top.size % palette.size].copy(alpha = 0.6f)
                 )
             )
@@ -78,7 +82,7 @@ fun TopArtistsChart(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                "Top artistes",
+                stringResource(R.string.top_artists),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -90,7 +94,7 @@ fun TopArtistsChart(
                 DonutCard(
                     data = pies,
                     totalLabelTop = "%,d".format(totalArtiste),
-                    totalLabelBottom = "Artistes",
+                    totalLabelBottom = stringResource(R.string.artists_label),
                     ringWidth = 36.dp,
                     gapDegrees = 2.5f,
                     top3Provider = top3ProviderFrom,
