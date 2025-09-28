@@ -13,5 +13,6 @@
     <string name="lang_english">Anglais</string>
 
     <string name="nickname">Surnom</string>
+    <string name="settings_music_app">Plateforme</string>
 
 </resources>

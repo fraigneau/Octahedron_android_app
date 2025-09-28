@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.octahedron.data.AppLanguage
+import com.octahedron.data.AppMusic
 import com.octahedron.data.AppTheme
 import com.octahedron.data.UserPrefs
 import com.octahedron.data.userPrefsDataStore
@@ -19,6 +20,7 @@ class UserPrefsRepository(private val context: Context) {
         val THEME = stringPreferencesKey("theme")
         val NICKNAME = stringPreferencesKey("nickname")
         val LANGUAGE = stringPreferencesKey("language")
+        val MUSIC = stringPreferencesKey("music")
     }
 
     val prefs: Flow<UserPrefs> =
@@ -31,7 +33,8 @@ class UserPrefsRepository(private val context: Context) {
                 UserPrefs(
                     theme = AppTheme.fromPref(p[Keys.THEME]),
                     nickname = p[Keys.NICKNAME] ?: "",
-                    language = AppLanguage.fromPref(p[Keys.LANGUAGE])
+                    language = AppLanguage.fromPref(p[Keys.LANGUAGE]),
+                    musicApp = AppMusic.fromPref(p[Keys.MUSIC])
                 )
             }
 
@@ -45,5 +48,9 @@ class UserPrefsRepository(private val context: Context) {
 
     suspend fun setLanguage(lang: AppLanguage) {
         context.userPrefsDataStore.edit { it[Keys.LANGUAGE] = lang.tag }
+    }
+
+    suspend fun setMusic(musicApp: AppMusic) {
+        context.userPrefsDataStore.edit { it[Keys.MUSIC] = musicApp.tag }
     }
 }

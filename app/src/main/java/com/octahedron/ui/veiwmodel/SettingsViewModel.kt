@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.octahedron.data.AppLanguage
+import com.octahedron.data.AppMusic
 import com.octahedron.data.AppTheme
 import com.octahedron.data.UserPrefs
 import com.octahedron.repository.UserPrefsRepository
@@ -21,5 +22,5 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     fun onThemeSelected(theme: AppTheme) = viewModelScope.launch { repo.setTheme(theme) }
     fun onNicknameChanged(nick: String)   = viewModelScope.launch { repo.setNickname(nick) }
     fun onLanguageSelected(lang: AppLanguage) = viewModelScope.launch { repo.setLanguage(lang) }
-
+    fun onMusicSelected(musicApp: AppMusic) = viewModelScope.launch { repo.setMusic(musicApp) }
 }
