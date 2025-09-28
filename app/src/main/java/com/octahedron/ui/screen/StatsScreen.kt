@@ -59,7 +59,7 @@ fun StatsScreen(vm: StatsViewModel) {
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.error_with_message, ui.error ?: ""))
+                    Text(stringResource(R.string.error_with_message, ui.error))
                     Spacer(Modifier.height(8.dp))
                     Button(onClick = {  }) {
                         Text(stringResource(R.string.retry))
@@ -228,20 +228,6 @@ private fun StatCard(
         }
     }
 }
-
-
-@Composable
-private fun SectionHeader(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-    )
-}
-
-private fun durationOrBlank(ms: Long?): String? =
-    ms?.let { formatHms(it) }
 
 private fun formatHms(totalMs: Long): String {
     val totalSec = (totalMs / 1000).coerceAtLeast(0)
