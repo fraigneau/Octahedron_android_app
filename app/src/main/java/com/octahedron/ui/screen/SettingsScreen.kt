@@ -37,12 +37,39 @@ fun SettingsScreen(vm: SettingsViewModel) {
         )
 
         Text(stringResource(R.string.settings_language))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(AppLanguage.FRENCH, AppLanguage.ENGLISH).forEach { lang ->
-                LanguageChip(
-                    text = stringResource(lang.labelRes),
-                    selected = prefs.language == lang
-                ) { vm.onLanguageSelected(lang) }
+        var langExpanded by remember { mutableStateOf(false) }
+        val languages = listOf(AppLanguage.FRENCH, AppLanguage.ENGLISH)
+        val selectedLanguage = prefs.language
+        ExposedDropdownMenuBox(
+            expanded = langExpanded,
+            onExpandedChange = { langExpanded = !langExpanded }
+        ) {
+            OutlinedTextField(
+                value = stringResource(selectedLanguage.labelRes),
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(stringResource(R.string.settings_language)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = langExpanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = langExpanded,
+                onDismissRequest = { langExpanded = false }
+            ) {
+                languages.forEach { lang ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(lang.labelRes)) },
+                        onClick = {
+                            vm.onLanguageSelected(lang)
+                            langExpanded = false
+                        },
+                        leadingIcon = {
+                            if (selectedLanguage == lang) Icon(Icons.Default.Check, null)
+                        }
+                    )
+                }
             }
         }
     }
