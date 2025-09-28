@@ -15,4 +15,30 @@
     <string name="nickname">Nickname</string>
     <string name="settings_music_app">Platform</string>
 
+
+    <!-- Stats / errors -->
+    <string name="error_with_message">Oops: %1$s</string>
+    <string name="retry">Retry</string>
+
+    <!-- Period tabs -->
+    <string name="period_day">Day</string>
+    <string name="period_week">Week</string>
+    <string name="period_month">Month</string>
+    <string name="period_year">Year</string>
+    <string name="period_all">All</string>
+
+    <!-- KPIs -->
+    <string name="metric_plays">Plays</string>
+    <string name="metric_unique_tracks">Unique tracks</string>
+    <string name="metric_listening_time">Listening time</string>
+
+    <!-- Top artists / tracks -->
+    <string name="top_artists">Top artists</string>
+    <string name="top_tracks">Top tracks</string>
+    <string name="artists_label">Artists</string>
+    <string name="others">Others</string>
+
+    <!-- Misc -->
+    <string name="unknown_artist">Unknown</string>
+    <string name="album_cover_content_desc">Album cover</string>
 </resources>
