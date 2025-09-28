@@ -18,6 +18,7 @@ import com.octahedron.data.AppTheme
 import com.octahedron.ui.veiwmodel.SettingsViewModel
 import com.octahedron.R
 import com.octahedron.data.AppMusic
+import kotlin.compareTo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +43,47 @@ fun SettingsScreen(vm: SettingsViewModel) {
             label = { Text(stringResource(R.string.nickname)) },
             modifier = Modifier.fillMaxWidth()
         )
+
+        /** ESP MAC Input **/
+        val macParts = remember(prefs.espMac) {
+            prefs.espMac.split(":").map { it.padStart(2, '0').take(2) }.toMutableList()
+                .let { while (it.size < 6) it.add(""); it }
+        }
+        val partStates = remember(macParts) { macParts.map { mutableStateOf(it) } }
+        Column(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = partStates.joinToString(":") { it.value.padStart(2, '0') },
+                onValueChange = {},
+                label = { Text(stringResource(R.string.esp_mac)) },
+                enabled = false,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                partStates.forEachIndexed { i, state ->
+                    OutlinedTextField(
+                        value = state.value,
+                        onValueChange = { newValue ->
+                            val filtered = newValue.filter { it.isDigit() || it.lowercaseChar() in 'a'..'f' }
+                                .take(2).uppercase()
+                            state.value = filtered
+                            val newMac = partStates.joinToString(":") { it.value.padStart(2, '0') }
+                            vm.onEspMacChanged(newMac)
+                        },
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 1.dp)
+                    )
+                    if (i < 5) {
+                        Text(":", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 16.dp))
+                    }
+                }
+            }
+        }
 
         /** Language Dropdown Menu **/
         Text(stringResource(R.string.settings_language))

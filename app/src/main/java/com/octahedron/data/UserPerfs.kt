@@ -10,11 +10,12 @@ import com.octahedron.R
 data class UserPrefs(
     val theme: AppTheme,
     val nickname: String,
-    val language: AppLanguage = AppLanguage.ENGLISH,
-    val musicApp: AppMusic = AppMusic.SPOTIFY,
+    val espMac: String,
+    val language: AppLanguage,
+    val musicApp: AppMusic,
 ) {
     companion object {
-        val DEFAULT = UserPrefs(AppTheme.SYSTEM, "nickname")
+        val DEFAULT = UserPrefs(AppTheme.SYSTEM, "nickname", "00:00:00:00:00:00", AppLanguage.ENGLISH, AppMusic.SPOTIFY)
     }
 }
 

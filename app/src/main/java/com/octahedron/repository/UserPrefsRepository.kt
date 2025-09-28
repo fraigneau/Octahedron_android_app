@@ -1,6 +1,7 @@
 package com.octahedron.repository
 
 import android.content.Context
+import androidx.compose.ui.input.key.Key
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -19,6 +20,7 @@ class UserPrefsRepository(private val context: Context) {
     private object Keys {
         val THEME = stringPreferencesKey("theme")
         val NICKNAME = stringPreferencesKey("nickname")
+        val ESP_MAC = stringPreferencesKey("esp_mac")
         val LANGUAGE = stringPreferencesKey("language")
         val MUSIC = stringPreferencesKey("music")
     }
@@ -33,6 +35,7 @@ class UserPrefsRepository(private val context: Context) {
                 UserPrefs(
                     theme = AppTheme.fromPref(p[Keys.THEME]),
                     nickname = p[Keys.NICKNAME] ?: "",
+                    espMac = p[Keys.ESP_MAC] ?: "00:00:00:00:00:00",
                     language = AppLanguage.fromPref(p[Keys.LANGUAGE]),
                     musicApp = AppMusic.fromPref(p[Keys.MUSIC])
                 )
@@ -44,6 +47,10 @@ class UserPrefsRepository(private val context: Context) {
 
     suspend fun setNickname(nick: String) {
         context.userPrefsDataStore.edit { it[Keys.NICKNAME] = nick }
+    }
+
+    suspend fun setEspMac(mac: String) {
+        context.userPrefsDataStore.edit { it[Keys.ESP_MAC] = mac }
     }
 
     suspend fun setLanguage(lang: AppLanguage) {

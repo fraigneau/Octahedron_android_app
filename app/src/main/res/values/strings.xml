@@ -18,9 +18,10 @@
     <string name="lang_english">English</string>
 
     <string name="settings_music_app">Platform</string>
-    <string name="music_app_spotify" translatable="false"> Spotify</string>
+    <string name="music_app_spotify" translatable="false">Spotify</string>
     <string name="music_app_youtube_music" translatable="false">Youtube Music</string>
     <string name="music_app_deezer" translatable="false">Deezer</string>
+    <string name="esp_mac" translatable="false">Mac Adress</string>
 
 
 </resources>

@@ -21,6 +21,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun onThemeSelected(theme: AppTheme) = viewModelScope.launch { repo.setTheme(theme) }
     fun onNicknameChanged(nick: String)   = viewModelScope.launch { repo.setNickname(nick) }
+    fun onEspMacChanged(mac: String)    = viewModelScope.launch { repo.setEspMac(mac) }
     fun onLanguageSelected(lang: AppLanguage) = viewModelScope.launch { repo.setLanguage(lang) }
     fun onMusicSelected(musicApp: AppMusic) = viewModelScope.launch { repo.setMusic(musicApp) }
 }
