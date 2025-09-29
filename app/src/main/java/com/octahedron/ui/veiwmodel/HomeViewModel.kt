@@ -11,17 +11,19 @@ import kotlinx.coroutines.flow.stateIn
 import java.time.ZoneId
 import javax.inject.Inject
 
-
-data class WeeklyChartUiState(
-    val days: List<ListeningHistoryRepository.DailyStat> = emptyList(),
-    val weekTotalMs: Long = 0L,
-    val rowCount: Int = 0
-)
-
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repo: ListeningHistoryRepository
+    repo: ListeningHistoryRepository
 ): ViewModel() {
+
+    companion object {
+        const val TAG = "HomeViewModel"
+        data class WeeklyChartUiState(
+            val days: List<ListeningHistoryRepository.DailyStat> = emptyList(),
+            val weekTotalMs: Long = 0L,
+            val rowCount: Int = 0
+        )
+    }
     private val zone = ZoneId.systemDefault()
 
     val uiState: StateFlow<WeeklyChartUiState> =
