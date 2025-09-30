@@ -41,4 +41,9 @@
     <!-- Misc -->
     <string name="unknown_artist">Unknown</string>
     <string name="album_cover_content_desc">Album cover</string>
+    <string name="weekly_listening_title">Listen this week</string>
+    <string name="weekly_listening_days">Mon -> Sun</string>
+    <string name="weekly_listening_max_per_day">Max/day : %1$s</string>
+    <string name="weekly_listening_no_data">No data this week</string>
+    <string name="weekly_listening_popup">%1$s • %2$s</string>
 </resources>

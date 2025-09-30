@@ -28,8 +28,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.octahedron.R
 import com.octahedron.ui.Card.ConnectionCard
 import com.octahedron.ui.Card.LastImageCard
 import com.octahedron.ui.Card.TimeCard
@@ -116,7 +118,7 @@ private fun WeeklyChartSection(vm: HomeViewModel) {
     val ui by vm.uiState.collectAsState()
 
     TimeCard(
-        title = "Écoute cette semaine",
+        title = stringResource(id = R.string.weekly_listening_title),
         subtitle = formatHm(ui.weekTotalMs),
         leading = {
             Icon(
@@ -127,12 +129,15 @@ private fun WeeklyChartSection(vm: HomeViewModel) {
         },
         footer = {
             Text(
-                "Lun → Dim",
+                stringResource(id = R.string.weekly_listening_days),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                "Max/jour : ${formatHm(ui.days.maxOfOrNull { it.totalPlayTimeMs } ?: 0)}",
+                stringResource(
+                    id = R.string.weekly_listening_max_per_day,
+                    formatHm(ui.days.maxOfOrNull { it.totalPlayTimeMs } ?: 0)
+                ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -174,7 +179,7 @@ private fun WeeklyListeningChart(
 
     if (dayLabels.isEmpty() || valuesMs.isEmpty()) {
         Text(
-            "Aucune donnée cette semaine",
+            stringResource(id = R.string.weekly_listening_no_data),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -242,10 +247,10 @@ private fun WeeklyListeningChart(
                 textStyle = MaterialTheme.typography.labelSmall.copy(
                     color = MaterialTheme.colorScheme.onSurface
                 ),
-                contentBuilder = { dataIndex, _, valueMinutes ->
-                    val ms = (valueMinutes * 60_000).toLong()
-                    "${dayLabels[dataIndex]} • ${formatHm(ms)}"
-                }
+            contentBuilder = { dataIndex, _, valueMinutes ->
+                val ms = (valueMinutes * 60_000).toLong()
+                "${dayLabels[dataIndex]} • ${formatHm(ms)}"
+            }
             ),
             labelHelperProperties = LabelHelperProperties(
                 enabled = false
@@ -253,6 +258,7 @@ private fun WeeklyListeningChart(
         )
     }
 }
+
 
 @Composable
 fun donutPalette(): List<Color> {

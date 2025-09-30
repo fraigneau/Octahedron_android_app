@@ -40,4 +40,9 @@
     <!-- Divers -->
     <string name="unknown_artist">Inconnu</string>
     <string name="album_cover_content_desc">Pochette d\'album</string>
+    <string name="weekly_listening_title">Écoute cette semaine</string>
+    <string name="weekly_listening_days">Lun → Dim</string>
+    <string name="weekly_listening_max_per_day">Max/jour : %1$s</string>
+    <string name="weekly_listening_no_data">Aucune donnée cette semaine</string>
+    <string name="weekly_listening_popup">%1$s • %2$s</string>
 </resources>
