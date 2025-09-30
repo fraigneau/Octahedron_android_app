@@ -3,6 +3,7 @@ package com.octahedron.ui.veiwmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.octahedron.data.bus.EspConnectionBus
+import com.octahedron.data.bus.NowPlayingBus
 import com.octahedron.repository.ListeningHistoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,6 +50,17 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             EspConnectionBus.flow.collect { state ->
                 _ui.value = state
+            }
+        }
+    }
+
+    private val _lastPlayed = MutableStateFlow(NowPlayingBus.NowPlaying())
+    val lastPlayed: StateFlow<NowPlayingBus.NowPlaying> = _lastPlayed
+
+    init {
+        viewModelScope.launch {
+            NowPlayingBus.flow.collect { np ->
+                _lastPlayed.value = np
             }
         }
     }

@@ -1,16 +1,10 @@
 package com.octahedron.service
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.graphics.Bitmap
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import androidx.core.content.getSystemService
 import com.octahedron.data.bus.NowPlayingBus
 import com.octahedron.data.bus.NowPlayingBus.NowPlaying
 import com.octahedron.repository.NowPlayingRepository
@@ -111,8 +105,8 @@ class DataService : Service() {
         NormalizedNowPlaying(
             title = src.title.orEmpty().trim(),
             album = src.album.orEmpty().trim(),
-            img = src.bitmap,
-            durationMs = src.durationMs,
+            img = src.bitmap!!,
+            durationMs = src.durationMs!!,
             primaryArtist = splitArtists(src.artist).firstOrNull()
                 ?: src.artist.orEmpty().trim(),
             featuring = splitArtists(src.artist).drop(1)
