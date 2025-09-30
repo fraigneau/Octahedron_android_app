@@ -45,4 +45,8 @@
     <string name="weekly_listening_max_per_day">Max/jour : %1$s</string>
     <string name="weekly_listening_no_data">Aucune donnée cette semaine</string>
     <string name="weekly_listening_popup">%1$s • %2$s</string>
+    <string name="last_image_title">Dernier morceau enregistré</string>
+    <string name="no_image_yet">Aucune image envoyée pour le moment</string>
+    <string name="album_art_cd">Pochette / vignette</string>
+    <string name="untitled">Sans nom</string>
 </resources>
