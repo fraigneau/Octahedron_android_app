@@ -1,4 +1,4 @@
-package com.octahedron.ui.Card
+package com.octahedron.ui.card
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

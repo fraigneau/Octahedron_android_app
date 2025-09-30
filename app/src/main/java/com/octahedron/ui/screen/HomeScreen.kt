@@ -32,9 +32,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.octahedron.R
-import com.octahedron.ui.Card.ConnectionCard
-import com.octahedron.ui.Card.LastImageCard
-import com.octahedron.ui.Card.TimeCard
+import com.octahedron.ui.card.ConnectionCard
+import com.octahedron.ui.card.LastImageCard
+import com.octahedron.ui.card.TimeCard
 import com.octahedron.ui.veiwmodel.HomeViewModel
 import ir.ehsannarmani.compose_charts.ColumnChart
 import ir.ehsannarmani.compose_charts.models.BarProperties

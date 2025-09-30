@@ -1,4 +1,4 @@
-package com.octahedron.ui.Card
+package com.octahedron.ui.card
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
