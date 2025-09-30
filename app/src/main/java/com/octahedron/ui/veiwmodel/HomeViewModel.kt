@@ -20,7 +20,6 @@ class HomeViewModel @Inject constructor(
 ): ViewModel() {
 
     companion object {
-        const val TAG = "HomeViewModel"
         data class WeeklyChartUiState(
             val days: List<ListeningHistoryRepository.DailyStat> = emptyList(),
             val weekTotalMs: Long = 0L,

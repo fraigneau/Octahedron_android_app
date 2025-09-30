@@ -264,7 +264,7 @@ class BlePacketManager : Service() {
         serviceScope.launch {
             repeat(30) {
                 if (manager.isConnected && bleReady) {
-                    startSendCover(np.bitmap);
+                    startSendCover(np.bitmap)
                     espBusUpdate(lastImageName = np.title)
                     return@launch
                 }
@@ -431,7 +431,7 @@ class BlePacketManager : Service() {
     }
 
     private fun espBusUpdate(
-        status: EspConnectionBus.ConnectionStatus? = null,
+        status: ConnectionStatus? = null,
         lastPingMs: Long? = null,
         lastPingAt: Instant? = null,
         lastImageAt: Instant? = null,
