@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.constraintlayout.core)
+    implementation(libs.androidx.foundation)
 
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.7")
