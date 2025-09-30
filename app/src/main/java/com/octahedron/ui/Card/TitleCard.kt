@@ -1,4 +1,4 @@
-package com.octahedron.ui.helper
+package com.octahedron.ui.Card
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
@@ -26,7 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.octahedron.data.relation.ListeningWithTrackAndArtistsAndAlbum
-import com.octahedron.repository.ListeningHistoryRepository
+import com.octahedron.data.repository.ListeningHistoryRepository
 
 
 @Composable

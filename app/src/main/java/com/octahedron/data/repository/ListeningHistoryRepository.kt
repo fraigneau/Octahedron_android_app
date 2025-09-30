@@ -1,9 +1,8 @@
-package com.octahedron.repository
+package com.octahedron.data.repository
 
-import android.util.Log
 import com.octahedron.data.dao.ListeningHistoryDao
 import com.octahedron.data.relation.ListeningWithTrackAndArtistsAndAlbum
-import com.octahedron.model.Artist
+import com.octahedron.data.model.Artist
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

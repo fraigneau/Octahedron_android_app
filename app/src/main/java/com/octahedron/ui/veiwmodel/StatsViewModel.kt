@@ -2,7 +2,7 @@ package com.octahedron.ui.veiwmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.octahedron.repository.ListeningHistoryRepository
+import com.octahedron.data.repository.ListeningHistoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow

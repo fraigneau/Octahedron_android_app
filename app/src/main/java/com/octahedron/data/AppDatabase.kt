@@ -2,15 +2,14 @@ package com.octahedron.data
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import com.octahedron.data.dao.AlbumDao
-import com.octahedron.model.Artist
-import com.octahedron.model.ListeningHistory
-import com.octahedron.model.Track
-import com.octahedron.model.Album
-import com.octahedron.model.TrackAlbum
-import com.octahedron.model.TrackArtist
+import com.octahedron.data.model.Artist
+import com.octahedron.data.model.ListeningHistory
+import com.octahedron.data.model.Track
+import com.octahedron.data.model.Album
+import com.octahedron.data.model.TrackAlbum
+import com.octahedron.data.model.TrackArtist
 import com.octahedron.data.dao.ArtistDao
 import com.octahedron.data.dao.ListeningHistoryDao
 import com.octahedron.data.dao.TrackAlbumDao

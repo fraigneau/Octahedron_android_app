@@ -1,17 +1,17 @@
-package com.octahedron.repository
+package com.octahedron.data.repository
 
 import com.octahedron.data.dao.AlbumDao
-import com.octahedron.model.Album
+import com.octahedron.data.model.Album
 import jakarta.inject.Inject
 
 class AlbumRepository @Inject constructor(
     private val albumDao: AlbumDao,
 ) {
-    suspend fun insertAlbum(album: com.octahedron.model.Album): Long {
+    suspend fun insertAlbum(album: Album): Long {
         return albumDao.insertIgnore(album)
     }
 
-    suspend fun getAlbumById(id: Long): com.octahedron.model.Album? {
+    suspend fun getAlbumById(id: Long): Album? {
         return albumDao.getById(id)
     }
 
@@ -20,11 +20,11 @@ class AlbumRepository @Inject constructor(
         return existing?.uid ?: albumDao.insertIgnore(Album().apply { this.name = name })
     }
 
-    suspend fun updateAlbum(album: com.octahedron.model.Album) {
+    suspend fun updateAlbum(album: Album) {
         albumDao.update(album)
     }
 
-    suspend fun deleteAlbum(album: com.octahedron.model.Album) {
+    suspend fun deleteAlbum(album: Album) {
         albumDao.delete(album)
     }
 }

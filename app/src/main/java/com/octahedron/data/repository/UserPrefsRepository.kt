@@ -1,4 +1,4 @@
-package com.octahedron.repository
+package com.octahedron.data.repository
 
 import android.content.Context
 import androidx.compose.ui.input.key.Key

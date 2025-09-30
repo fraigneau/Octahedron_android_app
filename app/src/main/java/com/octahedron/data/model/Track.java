@@ -1,4 +1,4 @@
-package com.octahedron.model;
+package com.octahedron.data.model;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;

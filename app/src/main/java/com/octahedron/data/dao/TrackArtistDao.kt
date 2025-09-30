@@ -4,8 +4,8 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.octahedron.model.Artist
-import com.octahedron.model.TrackArtist
+import com.octahedron.data.model.Artist
+import com.octahedron.data.model.TrackArtist
 
 @Dao
 interface TrackArtistDao {

@@ -8,7 +8,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.octahedron.data.relation.TrackWithArtists
-import com.octahedron.model.Track
+import com.octahedron.data.model.Track
 import kotlinx.coroutines.flow.Flow
 
 @Dao

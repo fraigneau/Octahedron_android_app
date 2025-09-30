@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.octahedron.data.bus.EspConnectionBus
 import com.octahedron.data.bus.NowPlayingBus
-import com.octahedron.repository.ListeningHistoryRepository
+import com.octahedron.data.repository.ListeningHistoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

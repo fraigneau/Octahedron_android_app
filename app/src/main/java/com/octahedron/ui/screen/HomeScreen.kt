@@ -30,9 +30,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.octahedron.ui.helper.ConnectionCard
-import com.octahedron.ui.helper.LastImageCard
-import com.octahedron.ui.helper.TimeCard
+import com.octahedron.ui.Card.ConnectionCard
+import com.octahedron.ui.Card.LastImageCard
+import com.octahedron.ui.Card.TimeCard
 import com.octahedron.ui.veiwmodel.HomeViewModel
 import ir.ehsannarmani.compose_charts.ColumnChart
 import ir.ehsannarmani.compose_charts.models.BarProperties

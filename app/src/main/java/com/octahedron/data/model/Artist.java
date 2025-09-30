@@ -1,6 +1,4 @@
-package com.octahedron.model;
-
-import android.graphics.Bitmap;
+package com.octahedron.data.model;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
@@ -9,17 +7,15 @@ import androidx.room.PrimaryKey;
 
 @Entity
         (
-                tableName = "album",
+                tableName = "artist",
                 indices = { @Index(value = {"name"}, unique = true) }
         )
-public class Album {
+public class Artist {
 
     @PrimaryKey(autoGenerate = true)
     public long uid;
 
-    @ColumnInfo(name = "name")
+    @ColumnInfo(name = "name", collate = ColumnInfo.NOCASE)
     public String name;
 
-    @ColumnInfo(name = "cover", typeAffinity = ColumnInfo.BLOB)
-    public Bitmap cover;
 }

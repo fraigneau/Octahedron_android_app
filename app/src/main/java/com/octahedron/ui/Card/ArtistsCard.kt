@@ -1,4 +1,4 @@
-package com.octahedron.ui.helper
+package com.octahedron.ui.Card
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -33,8 +33,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
-import com.octahedron.model.Artist
-import com.octahedron.repository.ListeningHistoryRepository
+import com.octahedron.data.model.Artist
+import com.octahedron.data.repository.ListeningHistoryRepository
 import ir.ehsannarmani.compose_charts.PieChart
 import ir.ehsannarmani.compose_charts.models.Pie
 import kotlin.math.roundToInt

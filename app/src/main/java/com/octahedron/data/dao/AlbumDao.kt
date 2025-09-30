@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.octahedron.model.Album
+import com.octahedron.data.model.Album
 import kotlinx.coroutines.flow.Flow
 
 @Dao

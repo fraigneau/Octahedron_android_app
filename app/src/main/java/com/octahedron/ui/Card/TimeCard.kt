@@ -1,4 +1,4 @@
-package com.octahedron.ui.helper
+package com.octahedron.ui.Card
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn

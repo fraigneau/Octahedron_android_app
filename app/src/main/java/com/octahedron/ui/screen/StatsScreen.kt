@@ -28,9 +28,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.octahedron.repository.ListeningHistoryRepository
-import com.octahedron.ui.helper.TopArtistsChart
-import com.octahedron.ui.helper.TopTracksCard
+import com.octahedron.data.repository.ListeningHistoryRepository
+import com.octahedron.ui.Card.TopArtistsChart
+import com.octahedron.ui.Card.TopTracksCard
 import com.octahedron.ui.veiwmodel.StatsViewModel
 import com.octahedron.R
 

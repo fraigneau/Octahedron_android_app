@@ -7,7 +7,7 @@ import com.octahedron.data.AppLanguage
 import com.octahedron.data.AppMusic
 import com.octahedron.data.AppTheme
 import com.octahedron.data.UserPrefs
-import com.octahedron.repository.UserPrefsRepository
+import com.octahedron.data.repository.UserPrefsRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn

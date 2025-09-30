@@ -1,7 +1,7 @@
-package com.octahedron.repository
+package com.octahedron.data.repository
 
 import com.octahedron.data.dao.ArtistDao
-import com.octahedron.model.Artist
+import com.octahedron.data.model.Artist
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
 

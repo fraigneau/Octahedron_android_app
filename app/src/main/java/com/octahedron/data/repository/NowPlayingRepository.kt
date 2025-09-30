@@ -1,4 +1,4 @@
-package com.octahedron.repository
+package com.octahedron.data.repository
 
 import android.graphics.Bitmap
 import androidx.room.withTransaction
@@ -9,12 +9,12 @@ import com.octahedron.data.dao.ListeningHistoryDao
 import com.octahedron.data.dao.TrackAlbumDao
 import com.octahedron.data.dao.TrackArtistDao
 import com.octahedron.data.dao.TrackDao
-import com.octahedron.model.Album
-import com.octahedron.model.Artist
-import com.octahedron.model.ListeningHistory
-import com.octahedron.model.Track
-import com.octahedron.model.TrackAlbum
-import com.octahedron.model.TrackArtist
+import com.octahedron.data.model.Album
+import com.octahedron.data.model.Artist
+import com.octahedron.data.model.ListeningHistory
+import com.octahedron.data.model.Track
+import com.octahedron.data.model.TrackAlbum
+import com.octahedron.data.model.TrackArtist
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 

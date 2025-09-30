@@ -6,7 +6,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.octahedron.data.relation.ListeningWithTrackAndArtists
 import com.octahedron.data.relation.ListeningWithTrackAndArtistsAndAlbum
-import com.octahedron.model.ListeningHistory
+import com.octahedron.data.model.ListeningHistory
 import kotlinx.coroutines.flow.Flow
 
 @Dao

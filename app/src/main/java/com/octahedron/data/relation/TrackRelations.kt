@@ -1,7 +1,12 @@
 package com.octahedron.data.relation
 
 import androidx.room.*
-import com.octahedron.model.*
+import com.octahedron.data.model.Album
+import com.octahedron.data.model.Artist
+import com.octahedron.data.model.ListeningHistory
+import com.octahedron.data.model.Track
+import com.octahedron.data.model.TrackAlbum
+import com.octahedron.data.model.TrackArtist
 
 data class TrackWithArtists(
     @Embedded val track: Track,

@@ -1,10 +1,10 @@
-package com.octahedron.repository
+package com.octahedron.data.repository
 
 import com.octahedron.data.dao.TrackArtistDao
 import com.octahedron.data.dao.TrackDao
 import com.octahedron.data.relation.TrackWithArtists
-import com.octahedron.model.Track
-import com.octahedron.model.TrackArtist
+import com.octahedron.data.model.Track
+import com.octahedron.data.model.TrackArtist
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
 

@@ -5,9 +5,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
-import com.octahedron.model.Album
-import com.octahedron.model.Artist
-import com.octahedron.model.TrackAlbum
+import com.octahedron.data.model.Album
+import com.octahedron.data.model.TrackAlbum
 
 @Dao
 interface TrackAlbumDao {

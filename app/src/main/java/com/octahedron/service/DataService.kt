@@ -7,7 +7,7 @@ import android.os.IBinder
 import android.util.Log
 import com.octahedron.data.bus.NowPlayingBus
 import com.octahedron.data.bus.NowPlayingBus.NowPlaying
-import com.octahedron.repository.NowPlayingRepository
+import com.octahedron.data.repository.NowPlayingRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
