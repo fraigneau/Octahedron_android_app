@@ -25,12 +25,13 @@ import androidx.navigation.compose.rememberNavController
 import com.octahedron.ui.screen.HomeScreen
 import com.octahedron.ui.screen.SettingsScreen
 import com.octahedron.ui.screen.StatsScreen
+import com.octahedron.ui.veiwmodel.ConnectionViewModel
 import com.octahedron.ui.veiwmodel.HomeViewModel
 import com.octahedron.ui.veiwmodel.SettingsViewModel
 import com.octahedron.ui.veiwmodel.StatsViewModel
 
 @Composable
-fun Menu(settingsVM: SettingsViewModel, statsVM: StatsViewModel, homeVM: HomeViewModel) {
+fun Menu(settingsVM: SettingsViewModel, statsVM: StatsViewModel, homeVM: HomeViewModel, connectionVM: ConnectionViewModel) {
 
     val navController = rememberNavController()
 
@@ -66,7 +67,7 @@ fun Menu(settingsVM: SettingsViewModel, statsVM: StatsViewModel, homeVM: HomeVie
             modifier = Modifier.padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
         ) {
-            composable(Screen.Home.route) { HomeScreen(homeVM) }
+            composable(Screen.Home.route) { HomeScreen(homeVM, connectionVM) }
             composable(Screen.Stats.route) { StatsScreen(statsVM) }
             composable(Screen.Settings.route) { SettingsScreen(settingsVM) }
         }

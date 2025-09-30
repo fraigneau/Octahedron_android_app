@@ -20,6 +20,11 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.octahedron.data.ble.BluetoothDeviceManager
 import com.octahedron.data.ble.Packet
+import com.octahedron.data.bus.EspConnectionBus
+import com.octahedron.data.bus.EspConnectionBus.ConnectionStatus
+import com.octahedron.data.bus.EspConnectionBus.clear
+import com.octahedron.data.bus.EspConnectionBus.keep
+import com.octahedron.data.bus.EspConnectionBus.set
 import com.octahedron.data.bus.NowPlayingBus
 import com.octahedron.data.image.ImageTools
 import com.octahedron.data.userPrefsDataStore
@@ -36,6 +41,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import no.nordicsemi.android.ble.observer.ConnectionObserver
+import java.time.Instant
 import java.util.UUID
 import java.util.zip.CRC32
 import kotlin.coroutines.resume
@@ -102,9 +108,11 @@ class BlePacketManager : Service() {
         manager.setConnectionObserver(object : ConnectionObserver {
             override fun onDeviceConnecting(device: BluetoothDevice) {
                 Log.i(TAG, "Connecting to ${device.address}")
+                espBusUpdate(status = ConnectionStatus.Connecting)
                 bleReady = false
             }
             override fun onDeviceConnected(device: BluetoothDevice) {
+                espBusUpdate(status = ConnectionStatus.Connected)
                 Log.i(TAG, "Connected ${device.address} (GATT opened)")
             }
             override fun onDeviceFailedToConnect(device: BluetoothDevice, reason: Int) {
@@ -116,18 +124,21 @@ class BlePacketManager : Service() {
                 Log.i(TAG, "Device ready ${device.address} (services ok, MTU/notifs set)")
                 bleReady = true
                 firstSend = true
-                lastNowPlaying?.let { ensureConnectedAndSend(it.bitmap) }
+                lastNowPlaying?.let { ensureConnectedAndSend( it) }
+                espBusUpdate(status = ConnectionStatus.Connected)
                 startKeepAlive()
             }
             override fun onDeviceDisconnecting(device: BluetoothDevice) {
                 Log.i(TAG, "Disconnecting ${device.address}")
                 bleReady = false
+                espBusUpdate(status = ConnectionStatus.Disconnected)
                 stopKeepAlive()
             }
             override fun onDeviceDisconnected(device: BluetoothDevice, reason: Int) {
                 Log.w(TAG, "Disconnected ${device.address}: ${reason.toConnReason()}")
                 bleReady = false
                 stopKeepAlive()
+                espBusUpdate(status = ConnectionStatus.Disconnected)
                 scheduleReconnect(device)
             }
         })
@@ -147,6 +158,11 @@ class BlePacketManager : Service() {
                             }
                             val status = Packet.parse(bytes)
                             if (status == Packet.Parsed.Health(Packet.HealthStatus.OK)) {
+                                espBusUpdate(
+                                    status = ConnectionStatus.Connected,
+                                    lastPingMs = 0L,
+                                    lastPingAt = Instant.now()
+                                )
                                 return@sendAndWaitForResponse
                             }
                             Log.w(TAG, "HealthCheck: réponse invalide (status=$status)")
@@ -173,7 +189,7 @@ class BlePacketManager : Service() {
             NowPlayingBus.flow.collectLatest { np ->
                 Log.i(TAG, "Now playing: $np, bleReady=$bleReady, bitmap=${np.bitmap}")
                 lastNowPlaying = np
-                ensureConnectedAndSend(np.bitmap)
+                ensureConnectedAndSend(np)
             }
         }
     }
@@ -232,14 +248,15 @@ class BlePacketManager : Service() {
         }
     }
 
-    private fun ensureConnectedAndSend(bmp: Bitmap) {
+    private fun ensureConnectedAndSend(np: NowPlayingBus.NowPlaying) {
         val mac = macAddress
         if (mac.isNullOrBlank()) {
             Log.w(TAG, "Impossible d'envoyer: adresse MAC ESP32 non définie dans le DataStore")
             return
         }
         if (manager.isConnected && bleReady) {
-            startSendCover(bmp)
+            startSendCover(np.bitmap)
+            espBusUpdate(lastImageName =  np.title)
             return
         }
         val dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(mac)
@@ -247,7 +264,9 @@ class BlePacketManager : Service() {
         serviceScope.launch {
             repeat(30) {
                 if (manager.isConnected && bleReady) {
-                    startSendCover(bmp); return@launch
+                    startSendCover(np.bitmap);
+                    espBusUpdate(lastImageName = np.title)
+                    return@launch
                 }
                 delay(500)
             }
@@ -409,5 +428,28 @@ class BlePacketManager : Service() {
         ConnectionObserver.REASON_LINK_LOSS          -> "LINK_LOSS"
         ConnectionObserver.REASON_NOT_SUPPORTED      -> "NOT_SUPPORTED"
         else                                         -> "CODE_$this"
+    }
+
+    private fun espBusUpdate(
+        status: EspConnectionBus.ConnectionStatus? = null,
+        lastPingMs: Long? = null,
+        lastPingAt: Instant? = null,
+        lastImageAt: Instant? = null,
+        lastImageName: String? = null,
+        errorMessage: String? = null,
+        clearError: Boolean = false
+    ) {
+        EspConnectionBus.update(
+            status       = status?.let { set(it) } ?: keep,
+            lastPingMs   = lastPingMs?.let { set(it) } ?: keep,
+            lastPingAt   = lastPingAt?.let { set(it) } ?: keep,
+            lastImageAt  = lastImageAt?.let { set(it) } ?: keep,
+            lastImageName= lastImageName?.let { set(it) } ?: keep,
+            errorMessage = when {
+                clearError      -> clear                // efface le message d’erreur
+                errorMessage!=null -> set(errorMessage) // le remplace
+                else             -> keep                // ne touche pas
+            }
+        )
     }
 }

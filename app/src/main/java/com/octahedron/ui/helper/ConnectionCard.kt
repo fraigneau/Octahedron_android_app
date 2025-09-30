@@ -1,34 +1,58 @@
 package com.octahedron.ui.helper
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.octahedron.data.bus.EspConnectionBus
+import java.time.Instant
 
 @Composable
 fun ConnectionCard(
-    ui: Esp32ConnectionUi,
-    onPing: () -> Unit,
-    onSendImage: () -> Unit,
-    onReconnect: () -> Unit,
+    ui: EspConnectionBus.Esp32ConnectionUi,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors()
+        colors = CardDefaults.cardColors(),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
             Row(verticalAlignment = Alignment.CenterVertically) {
-                StatusDot(ui.status)
+                StatusDot(ui.status, size = 14.dp)
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = when (ui.status) {
-                        ConnectionStatus.Connected -> "ESP32 connecté"
-                        ConnectionStatus.Connecting -> "Connexion en cours…"
-                        ConnectionStatus.Disconnected -> "Non connecté"
+                        EspConnectionBus.ConnectionStatus.Connected -> "ESP32 connecté"
+                        EspConnectionBus.ConnectionStatus.Connecting -> "Connexion en cours…"
+                        EspConnectionBus.ConnectionStatus.Disconnected -> "Non connecté"
                     },
                     style = MaterialTheme.typography.titleMedium
                 )
             }
 
-            // Infos
             InfoLine(
                 label = "Dernier ping",
                 value = buildString {
@@ -37,16 +61,16 @@ fun ConnectionCard(
                     if (at != "—") append(" · $at")
                 }
             )
+
             InfoLine(
-                label = "Dernière image envoyée",
+                label = "Dernière image",
                 value = buildString {
-                    append(formatBytes(ui.lastImageBytes))
+                    append(ui.lastImageName ?: "—")
                     val at = formatInstantShort(ui.lastImageAt)
                     if (at != "—") append(" · $at")
                 }
             )
 
-            // Erreur éventuelle
             ui.errorMessage?.let {
                 Text(
                     text = it,
@@ -54,48 +78,16 @@ fun ConnectionCard(
                     color = MaterialTheme.colorScheme.error
                 )
             }
-
-            // Actions
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                FilledTonalButton(
-                    onClick = onPing,
-                    enabled = ui.status != ConnectionStatus.Connecting
-                ) {
-                    Icon(Icons.Outlined.NetworkPing, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Ping")
-                }
-                OutlinedButton(
-                    onClick = onSendImage,
-                    enabled = ui.status == ConnectionStatus.Connected
-                ) {
-                    Icon(Icons.Outlined.Image, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Envoyer une image")
-                }
-                Spacer(Modifier.weight(1f))
-                Button(
-                    onClick = onReconnect,
-                    enabled = ui.status != ConnectionStatus.Connecting
-                ) {
-                    Icon(Icons.Outlined.Sync, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Reconnexion")
-                }
-            }
         }
     }
 }
 
 @Composable
-private fun StatusDot(status: ConnectionStatus, size: Dp = 12.dp) {
+private fun StatusDot(status: EspConnectionBus.ConnectionStatus, size: Dp = 12.dp) {
     val color = when (status) {
-        ConnectionStatus.Connected -> MaterialTheme.colorScheme.tertiary
-        ConnectionStatus.Connecting -> MaterialTheme.colorScheme.secondary
-        ConnectionStatus.Disconnected -> MaterialTheme.colorScheme.error
+        EspConnectionBus.ConnectionStatus.Connected -> Color(0xFF4CAF50)
+        EspConnectionBus.ConnectionStatus.Connecting -> Color(0xFFFFC107)
+        EspConnectionBus.ConnectionStatus.Disconnected -> Color(0xFFF44336)
     }
     Box(
         Modifier
@@ -119,5 +111,16 @@ private fun InfoLine(label: String, value: String) {
             value,
             style = MaterialTheme.typography.bodyMedium
         )
+    }
+}
+
+fun formatInstantShort(instant: Instant?): String {
+    if (instant == null) return "—"
+    val dt = java.time.ZonedDateTime.ofInstant(instant, java.time.ZoneId.systemDefault())
+    val today = java.time.LocalDate.now()
+    return if (dt.toLocalDate() == today) {
+        "%02d:%02d:%02d".format(dt.hour, dt.minute, dt.second)
+    } else {
+        "${dt.dayOfMonth}/${dt.monthValue} %02d:%02d:%02d".format(dt.hour, dt.minute, dt.second)
     }
 }
