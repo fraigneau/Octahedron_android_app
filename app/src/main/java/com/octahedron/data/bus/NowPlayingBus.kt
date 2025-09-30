@@ -1,16 +1,20 @@
 package com.octahedron.data.bus
 
 import android.graphics.Bitmap
+import com.octahedron.data.bus.EspConnectionBus.Esp32ConnectionUi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 object NowPlayingBus {
     data class NowPlaying(
-        val title: String,
-        val artist: String,
-        val album: String,
-        val durationMs: Long,
-        val bitmap: Bitmap
+        val title: String? = null,
+        val artist: String? = null,
+        val album: String? = null,
+        val durationMs: Long? = null,
+        val bitmap: Bitmap? = null
     )
     private val _flow = MutableSharedFlow<NowPlaying>(
         replay = 1,
@@ -22,5 +26,6 @@ object NowPlayingBus {
         _flow.tryEmit(value)
     }
 
-    fun lastOrNull(): NowPlaying? = _flow.replayCache.firstOrNull()
+    private val _state = MutableStateFlow(NowPlaying())
+    val state: StateFlow<NowPlaying> = _state.asStateFlow()
 }

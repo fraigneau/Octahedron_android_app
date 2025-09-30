@@ -111,8 +111,8 @@ class DataService : Service() {
         NormalizedNowPlaying(
             title = src.title.orEmpty().trim(),
             album = src.album.orEmpty().trim(),
-            img = src.bitmap,
-            durationMs = src.durationMs,
+            img = src.bitmap!!,
+            durationMs = src.durationMs!!,
             primaryArtist = splitArtists(src.artist).firstOrNull()
                 ?: src.artist.orEmpty().trim(),
             featuring = splitArtists(src.artist).drop(1)
