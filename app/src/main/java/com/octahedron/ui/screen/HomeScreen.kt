@@ -50,97 +50,111 @@ import java.util.Locale
 
 @Composable
 fun HomeScreen(vm: HomeViewModel) {
-    val ui by vm.uiState.collectAsState()
-    val connUi by vm.ui.collectAsState()
-    val playUi by vm.lastPlayed.collectAsState()
-
-    var showDialog by remember { mutableStateOf(false) }
-
     Column(
-        modifier = Modifier
+        Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.SpaceEvenly // <-- répartit tout sur la hauteur
+        verticalArrangement = Arrangement.SpaceEvenly
     ) {
-        ConnectionCard(
-            ui = connUi,
-            modifier = Modifier.fillMaxWidth()
-        )
+        ConnectionSection(vm)
+        LastImageSection(vm)
+        WeeklyChartSection(vm)
+    }
+}
 
-        LastImageCard(
-            lastImageName = playUi.title,
-            lastImageAt = Instant.now(),
-            artist = playUi.artist,
-            album = playUi.album,
-            durationMs = playUi.durationMs,
-            bitmap = playUi.bitmap,
-            modifier = Modifier.fillMaxWidth(),
-            onOpen = { showDialog = true },
-        )
+@Composable
+private fun ConnectionSection(vm: HomeViewModel) {
+    val connUi by vm.ui.collectAsState()
+    ConnectionCard(
+        ui = connUi,
+        modifier = Modifier.fillMaxWidth()
+    )
+}
 
-        if (showDialog && playUi.bitmap != null) {
-            Dialog(onDismissRequest = { showDialog = false }) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    tonalElevation = 6.dp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Image(
-                            bitmap = playUi.bitmap!!.asImageBitmap(),
-                            contentDescription = "Image en grand",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                        )
-                    }
-                }
-            }
-        }
+@Composable
+private fun LastImageSection(vm: HomeViewModel) {
+    val playUi by vm.lastPlayed.collectAsState()
+    var showDialog by remember { mutableStateOf(false) }
 
-        TimeCard(
-            title = "Écoute cette semaine",
-            subtitle = formatHm(ui.weekTotalMs),
-            leading = {
-                Icon(
-                    imageVector = Icons.Outlined.BarChart,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            },
-            footer = {
-                Text(
-                    "Lun → Dim",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    "Max/jour : ${formatHm(ui.days.maxOfOrNull { it.totalPlayTimeMs } ?: 0)}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            onClick = { }
-        ) {
-            WeeklyListeningChart(
-                dayLabels = ui.days.map {
-                    it.date.dayOfWeek.getDisplayName(
-                        TextStyle.SHORT,
-                        Locale.getDefault()
-                    ).uppercase()
-                },
-                valuesMs = ui.days.map { it.totalPlayTimeMs },
+    LastImageCard(
+        lastImageName = playUi.title,
+        lastImageAt = Instant.now(),
+        artist = playUi.artist,
+        album = playUi.album,
+        durationMs = playUi.durationMs,
+        bitmap = playUi.bitmap,
+        modifier = Modifier.fillMaxWidth(),
+        onOpen = { showDialog = true },
+    )
+
+    if (showDialog && playUi.bitmap != null) {
+        Dialog(onDismissRequest = { showDialog = false }) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                tonalElevation = 6.dp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
-            )
+                    .padding(16.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Image(
+                        bitmap = playUi.bitmap!!.asImageBitmap(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                    )
+                }
+            }
         }
     }
 }
 
+@Composable
+private fun WeeklyChartSection(vm: HomeViewModel) {
+    val ui by vm.uiState.collectAsState()
+
+    TimeCard(
+        title = "Écoute cette semaine",
+        subtitle = formatHm(ui.weekTotalMs),
+        leading = {
+            Icon(
+                imageVector = Icons.Outlined.BarChart,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        footer = {
+            Text(
+                "Lun → Dim",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                "Max/jour : ${formatHm(ui.days.maxOfOrNull { it.totalPlayTimeMs } ?: 0)}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        onClick = { }
+    ) {
+        val dayLabels = remember(ui.days) {
+            ui.days.map {
+                it.date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()).uppercase()
+            }
+        }
+        val valuesMs = remember(ui.days) { ui.days.map { it.totalPlayTimeMs } }
+
+        WeeklyListeningChart(
+            dayLabels = dayLabels,
+            valuesMs = valuesMs,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+        )
+    }
+}
 
 @Composable
 private fun WeeklyListeningChart(
