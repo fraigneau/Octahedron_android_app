@@ -25,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,12 +32,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import com.octahedron.R
 import com.octahedron.data.model.Artist
 import com.octahedron.data.repository.ListeningHistoryRepository
+import com.octahedron.ui.helper.palette
 import ir.ehsannarmani.compose_charts.PieChart
 import ir.ehsannarmani.compose_charts.models.Pie
 import kotlin.math.roundToInt
-import com.octahedron.R
 
 
 @Composable
@@ -52,7 +52,7 @@ fun TopArtistsChart(
 ) {
     val top = artists.take(maxSlices)
     val others = artists.drop(maxSlices).sumOf { it.playCount }
-    val palette = donutPalette()
+    val palette = palette()
     val othersLabel = stringResource(R.string.others)
 
     val pies = buildList {
@@ -261,17 +261,4 @@ private fun PieChartLegend(
             }
         }
     }
-}
-
-@Composable
-fun donutPalette(): List<Color> {
-    return listOf(
-        Color(0xFF66C2A5),
-        Color(0xFFFC8D62),
-        Color(0xFF8DA0CB),
-        Color(0xFFE78AC3),
-        Color(0xFFA6D854),
-        Color(0xFFFFD92F),
-        Color(0xFFE5C494),
-    )
 }

@@ -1,7 +1,6 @@
 package com.octahedron.ui.card
 
 import android.graphics.Bitmap
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,18 +9,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.octahedron.R
+import com.octahedron.ui.helper.AlbumArt
+import com.octahedron.ui.helper.formatHms
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.math.max
 
 @Composable
 fun LastImageCard(
@@ -82,7 +79,7 @@ fun LastImageCard(
                             .let { m -> if (onOpen != null) m.clickable { onOpen() } else m },
                         contentAlignment = Alignment.Center
                     ) {
-                        AlbumArt2(
+                        AlbumArt(
                             bitmap = bitmap,
                             sizeDp = 72,
                             fallbackIconRes = R.drawable.logononackground
@@ -127,7 +124,7 @@ fun LastImageCard(
                         val duration = if (noTrack) {
                             "4:44"
                         } else {
-                            durationMs?.let { formatHmsCompact(it) }
+                            durationMs?.let { formatHms(it) }
                         }
 
                         val whenTxt = formatter.format(
@@ -150,51 +147,4 @@ fun LastImageCard(
             }
         }
     }
-}
-
-@Composable
-fun AlbumArt2(
-    bitmap: Bitmap?,
-    sizeDp: Int = 56,
-    fallbackIconRes: Int
-) {
-    val cd = stringResource(R.string.album_art_cd)
-    if (bitmap != null) {
-        Image(
-            bitmap = bitmap.asImageBitmap(),
-            contentDescription = cd,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(sizeDp.dp)
-                .clip(RoundedCornerShape(8.dp))
-        )
-    } else {
-        Surface(
-            modifier = Modifier
-                .size(sizeDp.dp)
-                .clip(RoundedCornerShape(8.dp)),
-            tonalElevation = 2.dp
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(fallbackIconRes),
-                    contentDescription = cd,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.size((sizeDp * 0.8).dp)
-                )
-            }
-        }
-    }
-}
-
-
-private fun formatHmsCompact(totalMs: Long): String {
-    val totalSec = max(0L, totalMs / 1000)
-    val h = totalSec / 3600
-    val m = (totalSec % 3600) / 60
-    val s = totalSec % 60
-    return if (h > 0) "%02d:%02d:%02d".format(h, m, s) else "%02d:%02d".format(m, s)
 }

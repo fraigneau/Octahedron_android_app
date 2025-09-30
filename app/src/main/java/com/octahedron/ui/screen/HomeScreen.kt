@@ -35,6 +35,8 @@ import com.octahedron.R
 import com.octahedron.ui.card.ConnectionCard
 import com.octahedron.ui.card.LastImageCard
 import com.octahedron.ui.card.TimeCard
+import com.octahedron.ui.helper.formatHm
+import com.octahedron.ui.helper.palette
 import com.octahedron.ui.veiwmodel.HomeViewModel
 import ir.ehsannarmani.compose_charts.ColumnChart
 import ir.ehsannarmani.compose_charts.models.BarProperties
@@ -166,7 +168,7 @@ private fun WeeklyListeningChart(
     dayLabels: List<String>,
     valuesMs: List<Long>,
     modifier: Modifier = Modifier,
-    palette: List<Color> = donutPalette(),
+    palette: List<Color> = palette(),
     highlightToday: Boolean = true,
 ) {
     fun msToMinutes(ms: Long) = (ms / 60000.0)
@@ -257,24 +259,4 @@ private fun WeeklyListeningChart(
             )
         )
     }
-}
-
-
-@Composable
-fun donutPalette(): List<Color> {
-    return listOf(
-        Color(0xFF66C2A5),
-        Color(0xFFFC8D62),
-        Color(0xFF8DA0CB),
-        Color(0xFFE78AC3),
-        Color(0xFFA6D854),
-        Color(0xFFFFD92F),
-        Color(0xFFE5C494),
-    )
-}
-private fun formatHm(ms: Long): String {
-    val totalSec = ms / 1000
-    val h = totalSec / 3600
-    val m = (totalSec % 3600) / 60
-    return if (h > 0) "${h}h ${m}min" else "${m}min"
 }
