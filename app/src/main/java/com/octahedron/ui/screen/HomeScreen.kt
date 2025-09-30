@@ -130,20 +130,34 @@ private fun WeeklyChartSection(vm: HomeViewModel) {
             )
         },
         footer = {
-            Text(
-                stringResource(id = R.string.weekly_listening_days),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                stringResource(
-                    id = R.string.weekly_listening_max_per_day,
-                    formatHm(ui.days.maxOfOrNull { it.totalPlayTimeMs } ?: 0)
-                ),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        },
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    stringResource(
+                        id = R.string.weekly_listening_max_per_day,
+                        formatHm(ui.days.maxOfOrNull { it.totalPlayTimeMs } ?: 0)
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                val totalMs = ui.days.sumOf { it.totalPlayTimeMs }
+                val daysWithData = ui.days.count { it.totalPlayTimeMs > 0 }
+                val avgMs = if (daysWithData > 0) totalMs / daysWithData else 0L
+
+                Text(
+                    stringResource(
+                        id = R.string.weekly_listening_avg_per_day,
+                        formatHm(avgMs)
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        ,
         onClick = { }
     ) {
         val dayLabels = remember(ui.days) {

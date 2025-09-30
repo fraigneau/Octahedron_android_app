@@ -52,4 +52,5 @@
     <string name="no_image_yet">No image sent yet</string>
     <string name="album_art_cd">Cover art / thumbnail</string>
     <string name="untitled">Untitled</string>
+    <string name="weekly_listening_avg_per_day">Average/day : %1$s</string>
 </resources>
