@@ -1,14 +1,9 @@
-package com.octahedron.ui.Card
+package com.octahedron.ui.card
 
-import android.graphics.Bitmap
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ListItem
@@ -18,15 +13,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.octahedron.R
 import com.octahedron.data.relation.ListeningWithTrackAndArtistsAndAlbum
 import com.octahedron.data.repository.ListeningHistoryRepository
+import com.octahedron.ui.helper.AlbumArt
+import com.octahedron.ui.helper.durationOrBlank
 
 
 @Composable
@@ -62,7 +57,7 @@ fun TopTracksCard(
                         subtitle = "${data.artists.firstOrNull()?.name ?: "Inconnu"} — ${data.album.name}",
                         trailing = durationOrBlank(data.track.duration),
                         playCount = top.playCount,
-                        leadingContent = { AlbumArt(bitmap = data.album.cover, sizeDp = 56) },
+                        leadingContent = { AlbumArt(bitmap = data.album.cover, fallbackIconRes = R.drawable.logononackground) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Divider(modifier = Modifier.padding(horizontal = 12.dp))
@@ -71,8 +66,6 @@ fun TopTracksCard(
         }
     }
 }
-
-
 
 @Composable
 fun RankedRow(
@@ -116,35 +109,4 @@ fun RankedRow(
             }
         }
     )
-}
-
-@Composable
-fun AlbumArt(bitmap: Bitmap?, sizeDp: Int = 56) {
-    if (bitmap != null) {
-        Image(
-            bitmap = bitmap.asImageBitmap(),
-            contentDescription = "Pochette d'album",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(sizeDp.dp)
-                .clip(RoundedCornerShape(8.dp))
-        )
-    } else {
-        Box(
-            Modifier
-                .size(sizeDp.dp)
-                .clip(RoundedCornerShape(8.dp)),
-        ) { }
-    }
-}
-
-private fun durationOrBlank(ms: Long?): String? =
-    ms?.let { formatHms(it) }
-
-private fun formatHms(totalMs: Long): String {
-    val totalSec = (totalMs / 1000).coerceAtLeast(0)
-    val h = totalSec / 3600
-    val m = (totalSec % 3600) / 60
-    val s = totalSec % 60
-    return "%02d:%02d:%02d".format(h, m, s)
 }

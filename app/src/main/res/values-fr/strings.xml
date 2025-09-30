@@ -49,4 +49,5 @@
     <string name="no_image_yet">Aucune image envoyée pour le moment</string>
     <string name="album_art_cd">Pochette / vignette</string>
     <string name="untitled">Sans nom</string>
+    <string name="weekly_listening_avg_per_day">Moyenne/jour : %1$s</string>
 </resources>

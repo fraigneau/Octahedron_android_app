@@ -32,9 +32,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.octahedron.R
-import com.octahedron.ui.Card.ConnectionCard
-import com.octahedron.ui.Card.LastImageCard
-import com.octahedron.ui.Card.TimeCard
+import com.octahedron.ui.card.ConnectionCard
+import com.octahedron.ui.card.LastImageCard
+import com.octahedron.ui.card.TimeCard
+import com.octahedron.ui.helper.formatHm
+import com.octahedron.ui.helper.palette
 import com.octahedron.ui.veiwmodel.HomeViewModel
 import ir.ehsannarmani.compose_charts.ColumnChart
 import ir.ehsannarmani.compose_charts.models.BarProperties
@@ -128,20 +130,34 @@ private fun WeeklyChartSection(vm: HomeViewModel) {
             )
         },
         footer = {
-            Text(
-                stringResource(id = R.string.weekly_listening_days),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                stringResource(
-                    id = R.string.weekly_listening_max_per_day,
-                    formatHm(ui.days.maxOfOrNull { it.totalPlayTimeMs } ?: 0)
-                ),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        },
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    stringResource(
+                        id = R.string.weekly_listening_max_per_day,
+                        formatHm(ui.days.maxOfOrNull { it.totalPlayTimeMs } ?: 0)
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                val totalMs = ui.days.sumOf { it.totalPlayTimeMs }
+                val daysWithData = ui.days.count { it.totalPlayTimeMs > 0 }
+                val avgMs = if (daysWithData > 0) totalMs / daysWithData else 0L
+
+                Text(
+                    stringResource(
+                        id = R.string.weekly_listening_avg_per_day,
+                        formatHm(avgMs)
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        ,
         onClick = { }
     ) {
         val dayLabels = remember(ui.days) {
@@ -166,7 +182,7 @@ private fun WeeklyListeningChart(
     dayLabels: List<String>,
     valuesMs: List<Long>,
     modifier: Modifier = Modifier,
-    palette: List<Color> = donutPalette(),
+    palette: List<Color> = palette(),
     highlightToday: Boolean = true,
 ) {
     fun msToMinutes(ms: Long) = (ms / 60000.0)
@@ -257,24 +273,4 @@ private fun WeeklyListeningChart(
             )
         )
     }
-}
-
-
-@Composable
-fun donutPalette(): List<Color> {
-    return listOf(
-        Color(0xFF66C2A5),
-        Color(0xFFFC8D62),
-        Color(0xFF8DA0CB),
-        Color(0xFFE78AC3),
-        Color(0xFFA6D854),
-        Color(0xFFFFD92F),
-        Color(0xFFE5C494),
-    )
-}
-private fun formatHm(ms: Long): String {
-    val totalSec = ms / 1000
-    val h = totalSec / 3600
-    val m = (totalSec % 3600) / 60
-    return if (h > 0) "${h}h ${m}min" else "${m}min"
 }

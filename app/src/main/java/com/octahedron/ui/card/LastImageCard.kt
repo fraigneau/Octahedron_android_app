@@ -1,7 +1,6 @@
-package com.octahedron.ui.Card
+package com.octahedron.ui.card
 
 import android.graphics.Bitmap
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,17 +9,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.octahedron.R
+import com.octahedron.ui.helper.AlbumArt
+import com.octahedron.ui.helper.formatHms
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.math.max
 
 @Composable
 fun LastImageCard(
@@ -37,13 +35,17 @@ fun LastImageCard(
     val emptyText = stringResource(R.string.no_image_yet)
     val untitled = stringResource(R.string.untitled)
 
-
     val metaSep = " — "
     val tailSep = " · "
     val datePattern = "dd/MM HH:mm:ss"
     val formatter = remember(datePattern) {
         DateTimeFormatter.ofPattern(datePattern).withZone(ZoneId.systemDefault())
     }
+
+    val noTrack = lastImageName == null &&
+            artist.isNullOrBlank() &&
+            album.isNullOrBlank() &&
+            bitmap == null
 
     ElevatedCard(modifier) {
         Column(
@@ -58,7 +60,7 @@ fun LastImageCard(
                 fontWeight = FontWeight.SemiBold
             )
 
-            if (lastImageName == null && lastImageAt == null && bitmap == null) {
+            if (!noTrack && lastImageName == null && lastImageAt == null && bitmap == null) {
                 Text(
                     emptyText,
                     style = MaterialTheme.typography.bodyMedium,
@@ -77,24 +79,37 @@ fun LastImageCard(
                             .let { m -> if (onOpen != null) m.clickable { onOpen() } else m },
                         contentAlignment = Alignment.Center
                     ) {
-                        AlbumArt2(bitmap = bitmap, sizeDp = 72)
+                        AlbumArt(
+                            bitmap = bitmap,
+                            sizeDp = 72,
+                            fallbackIconRes = R.drawable.logononackground
+                        )
                     }
 
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
+                        val title = if (noTrack) {
+                            "Octahedron"
+                        } else {
+                            lastImageName ?: untitled
+                        }
                         Text(
-                            text = lastImageName ?: untitled,
+                            text = title,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.titleSmall
                         )
 
-                        val meta = listOfNotNull(
-                            artist?.takeIf { it.isNotBlank() },
-                            album?.takeIf { it.isNotBlank() }
-                        ).joinToString(metaSep).ifBlank { null }
+                        val meta = if (noTrack) {
+                            null
+                        } else {
+                            listOfNotNull(
+                                artist?.takeIf { it.isNotBlank() },
+                                album?.takeIf { it.isNotBlank() }
+                            ).joinToString(metaSep).ifBlank { null }
+                        }
 
                         meta?.let {
                             Text(
@@ -106,8 +121,16 @@ fun LastImageCard(
                             )
                         }
 
-                        val duration = durationMs?.let { formatHmsCompact(it) }
-                        val whenTxt = lastImageAt?.let { formatter.format(it) }
+                        val duration = if (noTrack) {
+                            "4:44"
+                        } else {
+                            durationMs?.let { formatHms(it) }
+                        }
+
+                        val whenTxt = formatter.format(
+                            if (noTrack) Instant.now() else (lastImageAt ?: Instant.now())
+                        )
+
                         val tail = listOfNotNull(duration, whenTxt)
                             .joinToString(tailSep)
                             .ifBlank { null }
@@ -124,34 +147,4 @@ fun LastImageCard(
             }
         }
     }
-}
-
-@Composable
-fun AlbumArt2(bitmap: Bitmap?, sizeDp: Int = 56) {
-    val cd = stringResource(R.string.album_art_cd)
-    if (bitmap != null) {
-        Image(
-            bitmap = bitmap.asImageBitmap(),
-            contentDescription = cd,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(sizeDp.dp)
-                .clip(RoundedCornerShape(8.dp))
-        )
-    } else {
-        Surface(
-            modifier = Modifier
-                .size(sizeDp.dp)
-                .clip(RoundedCornerShape(8.dp)),
-            tonalElevation = 2.dp
-        ) {}
-    }
-}
-
-private fun formatHmsCompact(totalMs: Long): String {
-    val totalSec = max(0L, totalMs / 1000)
-    val h = totalSec / 3600
-    val m = (totalSec % 3600) / 60
-    val s = totalSec % 60
-    return if (h > 0) "%02d:%02d:%02d".format(h, m, s) else "%02d:%02d".format(m, s)
 }
