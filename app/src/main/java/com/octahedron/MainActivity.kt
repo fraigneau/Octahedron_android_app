@@ -15,6 +15,7 @@ import com.octahedron.service.DataService
 import com.octahedron.ui.Menu
 import com.octahedron.ui.lang.ProvideLocalizedResources
 import com.octahedron.ui.theme.OctahedronTheme
+import com.octahedron.ui.veiwmodel.HomeViewModel
 import com.octahedron.ui.veiwmodel.SettingsViewModel
 import com.octahedron.ui.veiwmodel.StatsViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -40,6 +41,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settingsVM: SettingsViewModel = viewModel()
             val statsVM: StatsViewModel = viewModel()
+            val homeVM: HomeViewModel = viewModel()
             val prefs = settingsVM.state.collectAsStateWithLifecycle().value
 
             // donner les permission pour le service de NotificationListener
@@ -50,7 +52,7 @@ class MainActivity : ComponentActivity() {
 
             ProvideLocalizedResources(appLanguage = prefs.language) {
                 OctahedronTheme(appTheme = prefs.theme) {
-                    Menu(settingsVM, statsVM)
+                    Menu(settingsVM, statsVM, homeVM)
                 }
             }
         }

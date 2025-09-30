@@ -1,5 +1,6 @@
 package com.octahedron.repository
 
+import android.util.Log
 import com.octahedron.data.dao.ListeningHistoryDao
 import com.octahedron.data.relation.ListeningWithTrackAndArtistsAndAlbum
 import com.octahedron.model.Artist
@@ -7,6 +8,8 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.TemporalAdjusters
@@ -29,6 +32,12 @@ class ListeningHistoryRepository @Inject constructor(
         val topItems: List<TopItem<ListeningWithTrackAndArtistsAndAlbum>>,
         val topArtists: List<TopItem<Artist>>,
         val allTrackItems: List<TopItem<ListeningWithTrackAndArtistsAndAlbum>>
+    )
+
+    data class DailyStat(
+        val date: LocalDate,
+        val totalPlayTimeMs: Long,
+        val playCount: Int
     )
 
     companion object {
@@ -56,6 +65,13 @@ class ListeningHistoryRepository @Inject constructor(
                     .take(topN)
             }
         }
+
+        private fun normalizeToMs(d: Long): Long = when {
+            d < 1_000L -> d * 1_000L
+            d < 86_400_000L -> d
+            d < 86_400_000_000L -> d / 1_000L
+            else -> d / 1_000_000L
+        }
     }
 
     private fun now(zone: ZoneId): ZonedDateTime = ZonedDateTime.now(zone)
@@ -63,7 +79,10 @@ class ListeningHistoryRepository @Inject constructor(
     fun statsToday(zone: ZoneId): Flow<PeriodStats> {
         val todayStart = now(zone).toLocalDate().atStartOfDay(zone)
         val tomorrowStart = todayStart.plusDays(1)
-        return statsBetween(todayStart.toInstant().toEpochMilli(), tomorrowStart.toInstant().toEpochMilli())
+        return statsBetween(
+            todayStart.toInstant().toEpochMilli(),
+            tomorrowStart.toInstant().toEpochMilli()
+        )
     }
 
     fun statsThisWeek(zone: ZoneId): Flow<PeriodStats> {
@@ -72,21 +91,32 @@ class ListeningHistoryRepository @Inject constructor(
             .toLocalDate()
             .atStartOfDay(zone)
         val nextWeekStart = weekStart.plusWeeks(1)
-        return statsBetween(weekStart.toInstant().toEpochMilli(), nextWeekStart.toInstant().toEpochMilli())
+        return statsBetween(
+            weekStart.toInstant().toEpochMilli(),
+            nextWeekStart.toInstant().toEpochMilli()
+        )
     }
 
     fun statsThisMonth(zone: ZoneId): Flow<PeriodStats> {
         val zNow = now(zone)
-        val monthStart = zNow.with(TemporalAdjusters.firstDayOfMonth()).toLocalDate().atStartOfDay(zone)
+        val monthStart =
+            zNow.with(TemporalAdjusters.firstDayOfMonth()).toLocalDate().atStartOfDay(zone)
         val nextMonthStart = monthStart.plusMonths(1)
-        return statsBetween(monthStart.toInstant().toEpochMilli(), nextMonthStart.toInstant().toEpochMilli())
+        return statsBetween(
+            monthStart.toInstant().toEpochMilli(),
+            nextMonthStart.toInstant().toEpochMilli()
+        )
     }
 
     fun statsThisYear(zone: ZoneId): Flow<PeriodStats> {
         val zNow = now(zone)
-        val yearStart = zNow.with(TemporalAdjusters.firstDayOfYear()).toLocalDate().atStartOfDay(zone)
+        val yearStart =
+            zNow.with(TemporalAdjusters.firstDayOfYear()).toLocalDate().atStartOfDay(zone)
         val nextYearStart = yearStart.plusYears(1)
-        return statsBetween(yearStart.toInstant().toEpochMilli(), nextYearStart.toInstant().toEpochMilli())
+        return statsBetween(
+            yearStart.toInstant().toEpochMilli(),
+            nextYearStart.toInstant().toEpochMilli()
+        )
     }
 
     fun statsAllTime(zone: ZoneId): Flow<PeriodStats> {
@@ -161,5 +191,35 @@ class ListeningHistoryRepository @Inject constructor(
             topArtists = topArtists,
             allTrackItems = allTrackItems,
         )
+    }
+
+    fun dailyTotalsThisWeek(zone: ZoneId): Flow<List<DailyStat>> {
+        val now = ZonedDateTime.now(zone)
+        val weekStartDate =
+            now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toLocalDate()
+        val nextWeekStartDate = weekStartDate.plusWeeks(1)
+
+        val fromMs = weekStartDate.atStartOfDay(zone).toInstant().toEpochMilli()
+        val toMsExclusive = nextWeekStartDate.atStartOfDay(zone).toInstant().toEpochMilli()
+
+        return listeningHistoryDao.getBetween(fromMs, toMsExclusive - 1).map { rows ->
+            val buckets = HashMap<LocalDate, MutableList<ListeningWithTrackAndArtistsAndAlbum>>()
+            rows.forEach { r ->
+                val playedAtMs = r.history.listenedAt
+                val date = Instant.ofEpochMilli(playedAtMs).atZone(zone).toLocalDate()
+                buckets.getOrPut(date) { mutableListOf() }.add(r)
+            }
+
+            (0..6).map { dayIdx ->
+                val day = weekStartDate.plusDays(dayIdx.toLong())
+                val dayRows = buckets[day].orEmpty()
+
+                val totalMs = dayRows.fold(0L) { acc, it ->
+                    acc + normalizeToMs(it.track.duration)
+                }
+
+                DailyStat(date = day, totalPlayTimeMs = totalMs, playCount = dayRows.size)
+            }
+        }
     }
 }
