@@ -54,5 +54,16 @@
         </plurals>
         <string name="album_cover_content_desc">Album cover</string>
 
+    <!-- Home -->
+        <string name="weekly_listening_title">Listen this week</string>
+        <string name="weekly_listening_days">Mon -> Sun</string>
+        <string name="weekly_listening_max_per_day">Max/day : %1$s</string>
+        <string name="weekly_listening_no_data">No data this week</string>
+        <string name="weekly_listening_popup">%1$s • %2$s</string>
 
+        <!-- Last track -->
+        <string name="last_image_title">Last recorded track</string>
+        <string name="no_image_yet">No image sent yet</string>
+        <string name="album_art_cd">Cover art / thumbnail</string>
+        <string name="untitled">Untitled</string>
 </resources>

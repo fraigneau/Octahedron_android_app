@@ -38,6 +38,13 @@ class NotificationManager: NotificationListenerService() {
     enum class MusicPlatform { Spotify, Deezer, YoutubeMusic }
     var currentPlatform: MusicPlatform? = null
 
+    override fun onCreate() {
+        super.onCreate()
+        Log.i(TAG, "Notification listener created")
+
+
+    }
+
 
     override fun onListenerConnected() {
         Log.i(TAG, "Notification listener started")
