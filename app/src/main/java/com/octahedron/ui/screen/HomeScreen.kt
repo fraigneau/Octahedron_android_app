@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import com.octahedron.ui.helper.ConnectionCard
 import com.octahedron.ui.helper.TimeCard
-import com.octahedron.ui.veiwmodel.ConnectionViewModel
 import com.octahedron.ui.veiwmodel.HomeViewModel
 import ir.ehsannarmani.compose_charts.ColumnChart
 import ir.ehsannarmani.compose_charts.models.BarProperties
@@ -35,9 +34,9 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
-fun HomeScreen(vm: HomeViewModel, connectionVM: ConnectionViewModel) {
+fun HomeScreen(vm: HomeViewModel) {
     val ui by vm.uiState.collectAsState()
-    val connUi by connectionVM.ui.collectAsState()
+    val connUi by vm.ui.collectAsState()
 
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ConnectionCard(
